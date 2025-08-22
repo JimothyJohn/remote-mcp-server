@@ -1,0 +1,14 @@
+{
+  "Parameters": {
+    "Environment": "staging",
+    "LogLevel": "INFO",
+    "MemorySize": 256,
+    "Timeout": 30
+  },
+  "Tags": {
+    "Project": "remote-mcp-server",
+    "Environment": "staging", 
+    "Owner": "development-team",
+    "CostCenter": "engineering"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "remote-mcp-server": {
+      "command": "uv",
+      "args": ["run", "python", "-m", "remote_mcp_server.mcp_server"],
+      "env": {
+        "LOG_LEVEL": "INFO"
+      }
+    }
+  }
+}

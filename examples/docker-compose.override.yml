@@ -1,0 +1,29 @@
+# Docker Compose override for local development
+# Copy to docker-compose.override.yml and customize as needed
+
+version: '3.8'
+
+services:
+  dev:
+    environment:
+      - LOG_LEVEL=DEBUG
+      - ENVIRONMENT=development
+    volumes:
+      - ./local-data:/app/data
+    ports:
+      - "3001:3000"  # Map to different port if needed
+    
+  prod:
+    environment:
+      - LOG_LEVEL=INFO
+      - ENVIRONMENT=production
+    # Uncomment to use custom configuration
+    # volumes:
+    #   - ./config/production.json:/app/config.json
+    
+  test:
+    environment:
+      - PYTEST_ARGS="-v --cov-report=html"
+    # Uncomment to preserve test results
+    # volumes:
+    #   - ./test-results:/app/test-results

@@ -1,0 +1,420 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  release:
+    types: [published]
+
+env:
+  PYTHON_VERSION: '3.11'
+  UV_VERSION: '0.4.x'
+
+jobs:
+  # Code Quality and Testing
+  quality:
+    name: Code Quality & Testing
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        test-type: [unit, lint, type-check]
+        
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          
+      - name: Install uv
+        uses: astral-sh/setup-uv@v2
+        with:
+          version: ${{ env.UV_VERSION }}
+          
+      - name: Install dependencies
+        run: uv sync --group dev
+        
+      - name: Run unit tests
+        if: matrix.test-type == 'unit'
+        run: |
+          uv run pytest tests/unit/ \
+            --cov=remote_mcp_server \
+            --cov-report=xml \
+            --cov-report=term-missing \
+            --junitxml=test-results.xml
+            
+      - name: Run linting
+        if: matrix.test-type == 'lint'
+        run: |
+          uv run ruff check . --output-format=github
+          uv run black --check --diff .
+          
+      - name: Run type checking
+        if: matrix.test-type == 'type-check'
+        run: uv run mypy .
+        
+      - name: Upload coverage reports
+        if: matrix.test-type == 'unit'
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./coverage.xml
+          fail_ci_if_error: true
+          token: ${{ secrets.CODECOV_TOKEN }}
+          
+      - name: Upload test results
+        if: matrix.test-type == 'unit'
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: test-results.xml
+
+  # Security Scanning
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          
+      - name: Install uv
+        uses: astral-sh/setup-uv@v2
+        with:
+          version: ${{ env.UV_VERSION }}
+          
+      - name: Install dependencies
+        run: uv sync --group dev
+        
+      - name: Run safety check
+        run: |
+          uv run safety check --json --output safety-report.json || true
+          if [ -f safety-report.json ]; then
+            echo "Safety report generated"
+            cat safety-report.json
+          fi
+          
+      - name: Run bandit security scan
+        run: |
+          uv add bandit[toml]
+          uv run bandit -r remote_mcp_server/ -f json -o bandit-report.json || true
+          if [ -f bandit-report.json ]; then
+            echo "Bandit report generated"
+            cat bandit-report.json
+          fi
+          
+      - name: Upload security reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-reports
+          path: |
+            safety-report.json
+            bandit-report.json
+
+  # Build Artifacts
+  build:
+    name: Build Artifacts
+    runs-on: ubuntu-latest
+    needs: [quality]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          
+      - name: Install uv
+        uses: astral-sh/setup-uv@v2
+        with:
+          version: ${{ env.UV_VERSION }}
+          
+      - name: Install dependencies
+        run: uv sync
+        
+      - name: Build Python package
+        run: uv build
+        
+      - name: Upload Python artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-package
+          path: dist/
+          
+      - name: Set up SAM CLI
+        uses: aws-actions/setup-sam@v2
+        with:
+          use-installer: true
+          
+      - name: Build SAM application
+        run: sam build --parallel
+        
+      - name: Upload SAM artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: sam-build
+          path: .aws-sam/build/
+
+  # Docker Build
+  docker-build:
+    name: Docker Build
+    runs-on: ubuntu-latest
+    needs: [quality]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        
+      - name: Build Docker image (test)
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          target: production
+          tags: remote-mcp-server:test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          
+      - name: Test Docker image
+        run: |
+          docker run --rm -d --name mcp-test -p 3000:3000 remote-mcp-server:test
+          sleep 10
+          curl -f http://localhost:3000/health || exit 1
+          docker stop mcp-test
+          
+      - name: Login to Container Registry
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ vars.DOCKER_REGISTRY || 'ghcr.io' }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Extract metadata
+        if: github.event_name != 'pull_request'
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ vars.DOCKER_REGISTRY || 'ghcr.io' }}/${{ github.repository }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,prefix={{branch}}-
+            
+      - name: Build and push Docker image
+        if: github.event_name != 'pull_request'
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          target: production
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # Deploy to Staging
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [build, docker-build]
+    if: github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main'
+    environment: staging
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Download SAM artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: sam-build
+          path: .aws-sam/build/
+          
+      - name: Set up SAM CLI
+        uses: aws-actions/setup-sam@v2
+        with:
+          use-installer: true
+          
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
+          
+      - name: Deploy to staging
+        run: |
+          sam deploy \
+            --stack-name remote-mcp-server-staging \
+            --region ${{ vars.AWS_REGION || 'us-east-1' }} \
+            --capabilities CAPABILITY_IAM \
+            --parameter-overrides Environment=staging \
+            --tags Environment=staging Project=remote-mcp-server \
+            --no-confirm-changeset \
+            --no-fail-on-empty-changeset
+            
+      - name: Get deployment outputs
+        id: outputs
+        run: |
+          API_URL=$(aws cloudformation describe-stacks \
+            --stack-name remote-mcp-server-staging \
+            --region ${{ vars.AWS_REGION || 'us-east-1' }} \
+            --query 'Stacks[0].Outputs[?OutputKey==`RemoteMcpServerApi`].OutputValue' \
+            --output text)
+          echo "api_url=$API_URL" >> $GITHUB_OUTPUT
+          
+      - name: Health check
+        run: |
+          API_URL="${{ steps.outputs.outputs.api_url }}"
+          if [ -n "$API_URL" ]; then
+            echo "Testing deployment at: $API_URL"
+            sleep 30  # Wait for API Gateway
+            curl -f "$API_URL/health" || exit 1
+            echo "Health check passed"
+          fi
+
+  # Integration Tests
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: [deploy-staging]
+    if: github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          
+      - name: Install uv
+        uses: astral-sh/setup-uv@v2
+        with:
+          version: ${{ env.UV_VERSION }}
+          
+      - name: Install dependencies
+        run: uv sync --group test
+        
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
+          
+      - name: Run integration tests
+        env:
+          AWS_SAM_STACK_NAME: remote-mcp-server-staging
+        run: |
+          uv run pytest tests/integration/ \
+            -m integration \
+            -v \
+            --tb=short \
+            --junitxml=integration-test-results.xml
+            
+      - name: Upload integration test results
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-test-results
+          path: integration-test-results.xml
+
+  # Deploy to Production
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [integration-tests]
+    if: github.ref == 'refs/heads/main'
+    environment: production
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Download SAM artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: sam-build
+          path: .aws-sam/build/
+          
+      - name: Set up SAM CLI
+        uses: aws-actions/setup-sam@v2
+        with:
+          use-installer: true
+          
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_PROD_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_PROD_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
+          
+      - name: Deploy to production
+        run: |
+          sam deploy \
+            --stack-name remote-mcp-server-prod \
+            --region ${{ vars.AWS_REGION || 'us-east-1' }} \
+            --capabilities CAPABILITY_IAM \
+            --parameter-overrides Environment=production \
+            --tags Environment=production Project=remote-mcp-server \
+            --no-confirm-changeset \
+            --no-fail-on-empty-changeset
+            
+      - name: Production health check
+        run: |
+          API_URL=$(aws cloudformation describe-stacks \
+            --stack-name remote-mcp-server-prod \
+            --region ${{ vars.AWS_REGION || 'us-east-1' }} \
+            --query 'Stacks[0].Outputs[?OutputKey==`RemoteMcpServerApi`].OutputValue' \
+            --output text)
+          
+          if [ -n "$API_URL" ]; then
+            echo "Production deployment at: $API_URL"
+            sleep 30
+            curl -f "$API_URL/health" || exit 1
+            echo "Production health check passed"
+            
+            # Create deployment summary
+            echo "## 🚀 Production Deployment Successful" >> $GITHUB_STEP_SUMMARY
+            echo "- **API URL**: $API_URL" >> $GITHUB_STEP_SUMMARY
+            echo "- **Health Check**: ✅ Passed" >> $GITHUB_STEP_SUMMARY
+            echo "- **Deployment Time**: $(date -u)" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  # Cleanup on Failure
+  cleanup-on-failure:
+    name: Cleanup Failed Deployment
+    runs-on: ubuntu-latest
+    needs: [deploy-staging, integration-tests, deploy-production]
+    if: failure() && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main')
+    
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
+          
+      - name: Check and cleanup staging stack
+        run: |
+          if aws cloudformation describe-stacks --stack-name remote-mcp-server-staging 2>/dev/null; then
+            echo "Staging stack exists, checking if rollback is needed"
+            # Add rollback logic here if needed
+          fi

@@ -1,0 +1,81 @@
+services:
+  # Main MCP server service
+  remote-mcp-server:
+    build: 
+      context: .
+      target: development
+    ports:
+      - "3000:3000"
+    environment:
+      - LOG_LEVEL=DEBUG
+      - ENVIRONMENT=development
+      - PORT=3000
+    volumes:
+      # Mount source code for development
+      - ./remote_mcp_server:/app/remote_mcp_server
+      - ./tests:/app/tests
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  # Production-like service (for testing production builds)
+  remote-mcp-server-prod:
+    build: 
+      context: .
+      target: production
+    ports:
+      - "3001:3000"
+    environment:
+      - LOG_LEVEL=INFO
+      - ENVIRONMENT=production
+      - PORT=3000
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+    profiles:
+      - prod-test
+
+  # Test runner service
+  test-runner:
+    build: 
+      context: .
+      target: development
+    volumes:
+      - .:/app
+      - /app/.venv  # Exclude virtual environment
+    environment:
+      - LOG_LEVEL=INFO
+      - ENVIRONMENT=test
+    command: ["pytest", "-v", "--cov=remote_mcp_server", "tests/unit/"]
+    profiles:
+      - test
+
+  # Linting service
+  linter:
+    build: 
+      context: .
+      target: development
+    volumes:
+      - .:/app
+      - /app/.venv  # Exclude virtual environment
+    command: ["sh", "-c", "ruff check . && black --check . && mypy ."]
+    profiles:
+      - lint
+
+# Networks
+networks:
+  default:
+    name: remote-mcp-network
+
+# Volumes for persistent data (if needed in future)
+volumes:
+  app_data:
+    driver: local

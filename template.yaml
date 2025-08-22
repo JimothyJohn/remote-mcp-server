@@ -1,0 +1,92 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Remote MCP Server - A Model Context Protocol server with AWS Lambda compatibility
+
+Parameters:
+  Environment:
+    Type: String
+    Default: staging
+    AllowedValues: [development, staging, production]
+    Description: Deployment environment
+  
+  LogLevel:
+    Type: String
+    Default: INFO
+    AllowedValues: [DEBUG, INFO, WARNING, ERROR]
+    Description: Application log level
+
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 30
+    MemorySize: 256
+    Runtime: python3.11
+    Tracing: Active
+    Environment:
+      Variables:
+        LOG_LEVEL: !Ref LogLevel
+        ENVIRONMENT: !Ref Environment
+    LoggingConfig:
+      LogFormat: JSON
+      ApplicationLogLevel: INFO
+      SystemLogLevel: WARN
+  Api:
+    TracingEnabled: true
+    Cors:
+      AllowMethods: "'GET,POST,OPTIONS'"
+      AllowHeaders: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+      AllowOrigin: "'*'"
+Resources:
+  RemoteMcpServerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: .
+      Handler: app.lambda_handler
+      Description: Remote MCP Server Lambda function with dual MCP/HTTP compatibility
+      Tags:
+        Project: remote-mcp-server
+        Environment: !Ref Environment
+      Events:
+        RemoteMcpServer:
+          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Properties:
+            Path: /remote-mcp-server
+            Method: get
+        RemoteMcpServerPost:
+          Type: Api
+          Properties:
+            Path: /remote-mcp-server
+            Method: post
+        HealthCheck:
+          Type: Api
+          Properties:
+            Path: /health
+            Method: get
+
+  ApplicationResourceGroup:
+    Type: AWS::ResourceGroups::Group
+    Properties:
+      Name:
+        Fn::Sub: ApplicationInsights-SAM-${AWS::StackName}
+      ResourceQuery:
+        Type: CLOUDFORMATION_STACK_1_0
+  ApplicationInsightsMonitoring:
+    Type: AWS::ApplicationInsights::Application
+    Properties:
+      ResourceGroupName:
+        Ref: ApplicationResourceGroup
+      AutoConfigurationEnabled: 'true'
+Outputs:
+  # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
+  # Find out more about other implicit resources you can reference within SAM
+  # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
+  RemoteMcpServerApi:
+    Description: API Gateway endpoint URL for Prod stage for RemoteMcpServer function
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/remote-mcp-server/"
+  RemoteMcpServerFunction:
+    Description: RemoteMcpServer Lambda Function ARN
+    Value: !GetAtt RemoteMcpServerFunction.Arn
+  RemoteMcpServerFunctionIamRole:
+    Description: Implicit IAM Role created for RemoteMcpServer function
+    Value: !GetAtt RemoteMcpServerFunctionRole.Arn
