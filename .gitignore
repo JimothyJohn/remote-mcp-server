@@ -479,3 +479,37 @@ test_events/
 # Coverage reports
 .coverage.*
 htmlcov/
+
+# Additional project-specific ignores
+# Temporary files
+*.tmp
+*.temp
+*~
+*.bak
+*.orig
+
+# Event/test files
+event.json
+env.json
+test_events/
+
+# IDE files
+*.swp
+*.swo
+*~
+.DS_Store
+.vscode/settings.json.local
+
+# Workspace files
+*.code-workspace.bak
+
+# Documentation build artifacts
+docs/_build/
+docs/dist/
+
+# Example project virtual environments
+examples/*/venv/
+examples/*/.venv/
+examples/*/__pycache__/
+examples/*/.pytest_cache/
+examples/*/.ruff_cache/

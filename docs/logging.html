@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logging Documentation - Remote MCP Server</title>
+    <meta name="description" content="Comprehensive logging system documentation for Remote MCP Server troubleshooting and monitoring.">
+    <link rel="canonical" href="https://JimothyJohn.github.io/remote-mcp-server/logging.html">
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-black: #000000;
+            --soft-black: #1a1a1a;
+            --dark-gray: #2d2d2d;
+            --medium-gray: #4a4a4a;
+            --light-gray: #6b6b6b;
+            --very-light-gray: #8a8a8a;
+            --border-gray: #e0e0e0;
+            --white: #ffffff;
+            --off-white: #f8f8f8;
+            --text-primary: var(--primary-black);
+            --text-secondary: var(--medium-gray);
+            --text-muted: var(--light-gray);
+            --bg-primary: var(--white);
+            --bg-secondary: var(--off-white);
+            --bg-tertiary: #f4f4f4;
+            --accent-color: var(--dark-gray);
+            --gradient-primary: linear-gradient(135deg, var(--primary-black), var(--dark-gray));
+            --gradient-secondary: linear-gradient(135deg, var(--medium-gray), var(--light-gray));
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.7;
+            color: var(--text-primary);
+            background: var(--bg-primary);
+        }
+        
+        .header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border-gray);
+            z-index: 1000;
+        }
+        
+        .nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-decoration: none;
+        }
+        
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+        
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+        
+        .nav-links a:hover, .nav-links a.active {
+            color: var(--primary-black);
+        }
+        
+        .main-content {
+            margin-top: 80px;
+            padding: 2rem;
+            max-width: 1000px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .content-header {
+            margin-bottom: 3rem;
+            text-align: center;
+        }
+        
+        .content-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1rem;
+        }
+        
+        .content-subtitle {
+            color: var(--text-secondary);
+            font-size: 1.2rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        h1, h2, h3, h4, h5, h6 {
+            color: var(--text-primary);
+            margin: 2rem 0 1rem 0;
+            line-height: 1.3;
+        }
+        
+        h1 { font-size: 2.5rem; }
+        h2 { font-size: 2rem; border-bottom: 2px solid var(--border-gray); padding-bottom: 0.5rem; }
+        h3 { font-size: 1.5rem; color: var(--accent-color); }
+        h4 { font-size: 1.3rem; }
+        h5 { font-size: 1.1rem; }
+        h6 { font-size: 1rem; }
+        
+        p {
+            color: var(--text-secondary);
+            margin: 1rem 0;
+            line-height: 1.7;
+        }
+        
+        ul, ol {
+            color: var(--text-secondary);
+            margin: 1rem 0;
+            padding-left: 2rem;
+        }
+        
+        li { margin: 0.5rem 0; }
+        
+        a {
+            color: var(--primary-black);
+            text-decoration: none;
+        }
+        
+        a:hover {
+            color: var(--dark-gray);
+            text-decoration: underline;
+        }
+        
+        pre {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-gray);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            overflow-x: auto;
+        }
+        
+        code {
+            background: var(--bg-tertiary);
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 0.9rem;
+        }
+        
+        pre code {
+            background: none;
+            padding: 0;
+        }
+        
+        .section {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 2rem;
+            margin: 2rem 0;
+            border: 1px solid var(--border-gray);
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            background: var(--white);
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        th, td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-gray);
+        }
+        
+        th {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+        
+        td {
+            color: var(--text-secondary);
+        }
+        
+        .log-level {
+            display: inline-block;
+            padding: 0.2rem 0.5rem;
+            border-radius: 3px;
+            font-weight: 600;
+            font-size: 0.8rem;
+            margin-right: 0.5rem;
+        }
+        
+        .level-debug { background: var(--light-gray); color: white; }
+        .level-info { background: var(--dark-gray); color: white; }
+        .level-warning { background: #f59e0b; color: white; }
+        .level-error { background: #ef4444; color: white; }
+        .level-critical { background: #7f1d1d; color: white; }
+        
+        @media (max-width: 768px) {
+            .nav {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .nav-links {
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 1rem;
+            }
+            
+            .main-content {
+                padding: 1rem;
+            }
+            
+            .content-title {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <nav class="nav">
+            <a href="index.html" class="logo">Remote MCP Server</a>
+            <ul class="nav-links">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="contributing.html">Contributing</a></li>
+                <li><a href="claude.html">Claude Guide</a></li>
+                <li><a href="deployment.html">Deployment</a></li>
+                <li><a href="api.html">API</a></li>
+                <li><a href="logging.html" class="active">Logging</a></li>
+                <li><a href="agents.html">For Agents</a></li>
+                <li><a href="https://github.com/JimothyJohn/remote-mcp-server">GitHub</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="main-content">
+        <div class="content-header">
+            <h1 class="content-title">Logging Documentation</h1>
+            <p class="content-subtitle">Comprehensive logging system for troubleshooting, monitoring, and performance analysis.</p>
+        </div>
+
+        <div class="section">
+            <h2>Overview</h2>
+            <p>The Remote MCP Server implements a comprehensive structured logging system designed for:</p>
+            <ul>
+                <li><strong>Troubleshooting</strong>: Detailed error context and stack traces</li>
+                <li><strong>Performance Monitoring</strong>: Request/response timing and resource usage</li>
+                <li><strong>Security Auditing</strong>: Request tracing and user activity</li>
+                <li><strong>Operational Insights</strong>: System health and usage patterns</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>Log Levels</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Level</th>
+                        <th>Purpose</th>
+                        <th>Example Use Cases</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="log-level level-debug">DEBUG</span></td>
+                        <td>Detailed diagnostic information</td>
+                        <td>Variable values, function entry/exit, detailed flow</td>
+                    </tr>
+                    <tr>
+                        <td><span class="log-level level-info">INFO</span></td>
+                        <td>General operational information</td>
+                        <td>Tool execution, request processing, system status</td>
+                    </tr>
+                    <tr>
+                        <td><span class="log-level level-warning">WARNING</span></td>
+                        <td>Potentially problematic situations</td>
+                        <td>Deprecated features, recoverable errors, rate limits</td>
+                    </tr>
+                    <tr>
+                        <td><span class="log-level level-error">ERROR</span></td>
+                        <td>Error conditions that don't halt execution</td>
+                        <td>Tool failures, validation errors, service unavailable</td>
+                    </tr>
+                    <tr>
+                        <td><span class="log-level level-critical">CRITICAL</span></td>
+                        <td>Serious errors that may cause termination</td>
+                        <td>System failures, security breaches, data corruption</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="section">
+            <h2>Configuration</h2>
+            
+            <h3>Environment Variables</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Variable</th>
+                        <th>Default</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>LOG_LEVEL</code></td>
+                        <td>INFO</td>
+                        <td>Global log level</td>
+                    </tr>
+                    <tr>
+                        <td><code>STRUCTURED_LOGGING</code></td>
+                        <td>true</td>
+                        <td>Enable JSON structured logs</td>
+                    </tr>
+                    <tr>
+                        <td><code>PERFORMANCE_LOGGING</code></td>
+                        <td>true</td>
+                        <td>Enable performance metrics</td>
+                    </tr>
+                    <tr>
+                        <td><code>LOG_FILE</code></td>
+                        <td>None</td>
+                        <td>Optional log file path</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Programmatic Configuration</h3>
+            <pre><code class="language-python">from remote_mcp_server.logging_config import setup_logging
+
+# Basic setup
+setup_logging(log_level="DEBUG")
+
+# Advanced setup
+setup_logging(
+    log_level="INFO",
+    enable_structured_logging=True,
+    enable_performance_logging=True,
+    log_file="/var/log/mcp-server.log"
+)</code></pre>
+        </div>
+
+        <div class="section">
+            <h2>JSON Log Structure</h2>
+            <p>All logs are output as structured JSON when structured logging is enabled:</p>
+            
+            <pre><code class="language-json">{
+  "timestamp": "2025-08-22T02:30:45.123Z",
+  "level": "INFO",
+  "logger": "mcp.tools",
+  "message": "MCP tool hello_world executed successfully",
+  "module": "mcp_server",
+  "function": "hello_world",
+  "line": 95,
+  "request": {
+    "request_id": "abc-123-def-456",
+    "timestamp": "2025-08-22T02:30:45.000Z",
+    "lambda_function": "remote-mcp-server-Function",
+    "lambda_version": "$LATEST"
+  },
+  "tool_name": "hello_world",
+  "input_name": "User",
+  "message_length": 42,
+  "action": "tool_success"
+}</code></pre>
+
+            <h3>Key Fields</h3>
+            <ul>
+                <li><strong>timestamp</strong>: ISO 8601 UTC timestamp</li>
+                <li><strong>level</strong>: Log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)</li>
+                <li><strong>logger</strong>: Logger category</li>
+                <li><strong>message</strong>: Human-readable message</li>
+                <li><strong>request</strong>: Request correlation context</li>
+                <li><strong>action</strong>: Standardized action type for filtering</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>Logging Categories</h2>
+            
+            <h3>MCP Tool Execution</h3>
+            <p>Logs all MCP tool operations with comprehensive context.</p>
+            
+            <h4>Tool Success Example</h4>
+            <pre><code class="language-json">{
+  "timestamp": "2025-08-22T02:30:45.145Z",
+  "level": "INFO",
+  "logger": "mcp.tools",
+  "message": "Hello world message generated",
+  "tool_name": "hello_world",
+  "message": "Hello, Alice! Welcome to Remote MCP Server.",
+  "message_length": 42,
+  "action": "tool_success"
+}</code></pre>
+
+            <h4>Tool Error Example</h4>
+            <pre><code class="language-json">{
+  "timestamp": "2025-08-22T02:30:45.145Z",
+  "level": "ERROR",
+  "logger": "mcp.tools",
+  "message": "Hello world tool failed: Invalid input",
+  "tool_name": "hello_world",
+  "input_name": "InvalidName",
+  "error_type": "ValueError",
+  "action": "tool_error",
+  "exception": {
+    "type": "ValueError",
+    "message": "Invalid input",
+    "traceback": "Traceback (most recent call last)..."
+  }
+}</code></pre>
+        </div>
+
+        <div class="section">
+            <h2>Performance Monitoring</h2>
+            
+            <h3>Timing Information</h3>
+            <pre><code class="language-json">{
+  "timestamp": "2025-08-22T02:30:45.200Z",
+  "level": "INFO",
+  "logger": "performance",
+  "message": "Performance: hello_world completed",
+  "operation": "hello_world",
+  "duration_ms": 22.5,
+  "duration_seconds": 0.023,
+  "tool_name": "hello_world",
+  "module": "mcp_server"
+}</code></pre>
+
+            <h3>Memory Usage</h3>
+            <pre><code class="language-json">{
+  "timestamp": "2025-08-22T02:30:45.200Z",
+  "level": "INFO",
+  "logger": "performance",
+  "message": "Memory: get_server_info",
+  "operation": "get_server_info",
+  "memory_mb": 45.2,
+  "memory_percent": 18.1,
+  "cpu_percent": 5.3
+}</code></pre>
+        </div>
+
+        <div class="section">
+            <h2>AWS CloudWatch Integration</h2>
+            
+            <h3>Log Groups</h3>
+            <ul>
+                <li><strong>Function Logs</strong>: <code>/aws/lambda/remote-mcp-server-Function-*</code></li>
+                <li><strong>API Gateway</strong>: <code>/aws/apigateway/remote-mcp-server</code></li>
+            </ul>
+
+            <h3>CloudWatch Insights Queries</h3>
+            
+            <h4>Find High Latency Requests</h4>
+            <pre><code class="language-sql">fields @timestamp, @message
+| filter @message like /performance/
+| filter duration_ms > 1000
+| sort @timestamp desc
+| limit 20</code></pre>
+
+            <h4>Error Analysis</h4>
+            <pre><code class="language-sql">fields @timestamp, @message, error_type, tool_name
+| filter level = "ERROR"
+| stats count() by error_type, tool_name
+| sort count desc</code></pre>
+
+            <h4>Cold Start Analysis</h4>
+            <pre><code class="language-sql">fields @timestamp, @message
+| filter @message like /cold_start/
+| filter cold_start = true
+| stats count() by bin(5m)</code></pre>
+        </div>
+
+        <div class="section">
+            <h2>Local Development</h2>
+            
+            <h3>Enable Debug Logging</h3>
+            <pre><code class="language-bash">export LOG_LEVEL=DEBUG
+uv run python -m remote_mcp_server.mcp_server</code></pre>
+
+            <h3>File-based Logging</h3>
+            <pre><code class="language-bash">export LOG_FILE=/tmp/mcp-server.log
+uv run python -m remote_mcp_server.mcp_server
+
+# Monitor logs
+tail -f /tmp/mcp-server.log | jq .</code></pre>
+
+            <h3>Filter Specific Components</h3>
+            <pre><code class="language-bash"># Only tool execution logs
+cat logs.jsonl | jq 'select(.logger == "mcp.tools")'
+
+# Only performance logs
+cat logs.jsonl | jq 'select(.logger == "performance")'
+
+# Only errors and warnings
+cat logs.jsonl | jq 'select(.level == "ERROR" or .level == "WARNING")'</code></pre>
+        </div>
+
+        <div class="section">
+            <h2>Security and Privacy</h2>
+            
+            <h3>Data Sanitization</h3>
+            <p>The logging system automatically sanitizes sensitive data:</p>
+            
+            <pre><code class="language-python"># These fields are automatically redacted
+sensitive_keys = {
+    'password', 'token', 'key', 'secret', 'authorization',
+    'cookie', 'session', 'credential', 'auth'
+}</code></pre>
+
+            <h3>Size Limits</h3>
+            <ul>
+                <li><strong>Log Messages</strong>: Truncated at 1000 characters</li>
+                <li><strong>Function Arguments</strong>: Limited to first 200 characters</li>
+                <li><strong>Array/Object Display</strong>: Maximum 10 items shown</li>
+                <li><strong>Response Bodies</strong>: Limited to 200 characters in logs</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>Best Practices</h2>
+            
+            <h3>For Developers</h3>
+            <ul>
+                <li><strong>Use Appropriate Log Levels</strong>: Choose the right level for each message</li>
+                <li><strong>Include Context</strong>: Always include relevant identifiers and timing</li>
+                <li><strong>Security Considerations</strong>: Never log passwords, tokens, or secrets</li>
+            </ul>
+
+            <h3>For Operations</h3>
+            <ul>
+                <li><strong>Monitor Key Metrics</strong>: Set up alerts for error rates and performance</li>
+                <li><strong>Log Analysis</strong>: Use structured queries for analysis</li>
+                <li><strong>Capacity Planning</strong>: Monitor log volume growth and storage costs</li>
+            </ul>
+        </div>
+    </main>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+</body>
+</html>

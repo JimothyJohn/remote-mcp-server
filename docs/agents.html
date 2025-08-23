@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>For Autonomous Agents - Remote MCP Server</title>
+    <meta name="description" content="Machine-readable documentation and API specifications for autonomous agents using Remote MCP Server.">
+    <link rel="canonical" href="https://JimothyJohn.github.io/remote-mcp-server/agents.html">
+    
+    <style>
+        :root {
+            --primary-black: #000000;
+            --soft-black: #1a1a1a;
+            --dark-gray: #2d2d2d;
+            --medium-gray: #4a4a4a;
+            --light-gray: #6b6b6b;
+            --very-light-gray: #8a8a8a;
+            --border-gray: #e0e0e0;
+            --white: #ffffff;
+            --off-white: #f8f8f8;
+            --text-primary: var(--primary-black);
+            --text-secondary: var(--medium-gray);
+            --text-muted: var(--light-gray);
+            --bg-primary: var(--white);
+            --bg-secondary: var(--off-white);
+            --bg-tertiary: #f4f4f4;
+            --accent-color: var(--dark-gray);
+            --gradient-primary: linear-gradient(135deg, var(--primary-black), var(--dark-gray));
+            --gradient-secondary: linear-gradient(135deg, var(--medium-gray), var(--light-gray));
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Monaco', 'Consolas', 'Courier New', monospace;
+            line-height: 1.4;
+            color: var(--text-primary);
+            background: var(--bg-primary);
+            font-size: 14px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+        
+        h1, h2, h3 {
+            color: var(--primary-black);
+            margin: 1rem 0 0.5rem 0;
+            font-weight: 600;
+        }
+        
+        h1 { font-size: 1.5rem; border-bottom: 2px solid var(--primary-black); padding-bottom: 0.5rem; }
+        h2 { font-size: 1.2rem; border-bottom: 1px solid var(--border-gray); padding-bottom: 0.25rem; }
+        h3 { font-size: 1rem; }
+        
+        p, li { color: var(--text-secondary); margin: 0.25rem 0; }
+        
+        ul, ol { padding-left: 1.5rem; margin: 0.5rem 0; }
+        
+        pre {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-gray);
+            padding: 0.75rem;
+            margin: 0.5rem 0;
+            overflow-x: auto;
+            font-size: 12px;
+            border-radius: 4px;
+        }
+        
+        code {
+            background: var(--bg-tertiary);
+            padding: 0.1rem 0.25rem;
+            border-radius: 2px;
+            font-size: 12px;
+        }
+        
+        pre code {
+            background: none;
+            padding: 0;
+        }
+        
+        .spec-section {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-gray);
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 4px;
+        }
+        
+        .api-endpoint {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-gray);
+            padding: 0.5rem;
+            margin: 0.5rem 0;
+            border-radius: 2px;
+        }
+        
+        .method-get { border-left: 4px solid #28a745; }
+        .method-post { border-left: 4px solid #007bff; }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 0.5rem 0;
+            font-size: 12px;
+        }
+        
+        th, td {
+            border: 1px solid var(--border-gray);
+            padding: 0.25rem 0.5rem;
+            text-align: left;
+        }
+        
+        th {
+            background: var(--bg-tertiary);
+            font-weight: 600;
+        }
+        
+        .json-schema {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-gray);
+            padding: 0.5rem;
+            font-size: 11px;
+            border-radius: 2px;
+            margin: 0.25rem 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>AUTONOMOUS AGENT INTEGRATION SPECIFICATION</h1>
+        
+        <div class="spec-section">
+            <h2>SERVICE METADATA</h2>
+            <pre><code>{
+  "service_name": "remote-mcp-server",
+  "version": "1.0.0",
+  "protocol": "MCP",
+  "transport": ["stdio", "http"],
+  "base_url": "https://rexlaqrt59.execute-api.us-east-1.amazonaws.com/Prod/",
+  "health_endpoint": "/health",
+  "capabilities": ["tool_calls", "json_rpc", "http_api"],
+  "authentication": "none"
+}</code></pre>
+        </div>
+
+        <div class="spec-section">
+            <h2>MCP PROTOCOL INTEGRATION</h2>
+            
+            <h3>Connection Establishment</h3>
+            <pre><code># STDIO Mode (Recommended for AI Assistants)
+COMMAND: uv run python -m remote_mcp_server.mcp_server
+TRANSPORT: stdio
+FORMAT: JSON-RPC 2.0
+ENCODING: utf-8</code></pre>
+
+            <h3>Tool Discovery</h3>
+            <pre><code>REQUEST:
+{
+  "jsonrpc": "2.0",
+  "method": "tools/list",
+  "params": {},
+  "id": 1
+}
+
+RESPONSE_SCHEMA:
+{
+  "jsonrpc": "2.0",
+  "result": {
+    "tools": [
+      {
+        "name": "string",
+        "description": "string",
+        "inputSchema": "json_schema_object"
+      }
+    ]
+  },
+  "id": "integer"
+}</code></pre>
+        </div>
+
+        <div class="spec-section">
+            <h2>AVAILABLE TOOLS</h2>
+            
+            <div class="api-endpoint">
+                <h3>hello_world</h3>
+                <pre><code>FUNCTION: hello_world(name: str = "World") -> str
+PURPOSE: Generate greeting message
+SCHEMA: {
+  "type": "object",
+  "properties": {
+    "name": {"type": "string", "default": "World"}
+  }
+}
+CALL: {"jsonrpc":"2.0","method":"tools/call","params":{"name":"hello_world","arguments":{"name":"Agent"}},"id":1}</code></pre>
+            </div>
+
+            <div class="api-endpoint">
+                <h3>get_current_time</h3>
+                <pre><code>FUNCTION: get_current_time() -> str
+PURPOSE: Return ISO timestamp
+SCHEMA: {"type": "object", "properties": {}}
+CALL: {"jsonrpc":"2.0","method":"tools/call","params":{"name":"get_current_time","arguments":{}},"id":2}</code></pre>
+            </div>
+
+            <div class="api-endpoint">
+                <h3>echo_message</h3>
+                <pre><code>FUNCTION: echo_message(message: str, repeat: int = 1) -> str
+PURPOSE: Echo message with repetition
+CONSTRAINTS: repeat ∈ [1, 10]
+SCHEMA: {
+  "type": "object",
+  "properties": {
+    "message": {"type": "string"},
+    "repeat": {"type": "integer", "minimum": 1, "maximum": 10, "default": 1}
+  },
+  "required": ["message"]
+}</code></pre>
+            </div>
+
+            <div class="api-endpoint">
+                <h3>get_server_info</h3>
+                <pre><code>FUNCTION: get_server_info() -> dict
+PURPOSE: Return server metadata and status
+OUTPUT_FORMAT: JSON string containing server information
+SCHEMA: {"type": "object", "properties": {}}</code></pre>
+            </div>
+
+            <div class="api-endpoint">
+                <h3>calculate_sum</h3>
+                <pre><code>FUNCTION: calculate_sum(numbers: list[float]) -> float
+PURPOSE: Sum array of numbers
+CONSTRAINTS: len(numbers) ≤ 100
+SCHEMA: {
+  "type": "object",
+  "properties": {
+    "numbers": {
+      "type": "array",
+      "items": {"type": "number"},
+      "maxItems": 100
+    }
+  },
+  "required": ["numbers"]
+}</code></pre>
+            </div>
+        </div>
+
+        <div class="spec-section">
+            <h2>HTTP API ENDPOINTS</h2>
+            
+            <div class="api-endpoint method-get">
+                <h3>GET /health</h3>
+                <pre><code>PURPOSE: Health check
+RESPONSE: {"status":"healthy","service":"remote-mcp-server","version":"1.0.0","timestamp":"ISO_8601"}
+STATUS_CODES: [200, 500]</code></pre>
+            </div>
+
+            <div class="api-endpoint method-get">
+                <h3>GET /remote-mcp-server</h3>
+                <pre><code>PURPOSE: Server information
+RESPONSE: {"message":"remote-mcp-server","version":"1.0.0","timestamp":"ISO_8601","method":"GET","path":"/remote-mcp-server"}
+STATUS_CODES: [200, 500]</code></pre>
+            </div>
+
+            <div class="api-endpoint method-post">
+                <h3>POST /remote-mcp-server</h3>
+                <pre><code>PURPOSE: Process JSON data or MCP requests
+INPUT_FORMATS: ["application/json", "base64_encoded"]
+MCP_REQUEST_FORMAT: JSON-RPC 2.0
+STATUS_CODES: [200, 400, 500]</code></pre>
+            </div>
+        </div>
+
+        <div class="spec-section">
+            <h2>ERROR HANDLING</h2>
+            
+            <h3>MCP Protocol Errors</h3>
+            <table>
+                <tr><th>Code</th><th>Meaning</th><th>Response</th></tr>
+                <tr><td>-32601</td><td>Method not found</td><td>Unknown tool/method</td></tr>
+                <tr><td>-32602</td><td>Invalid params</td><td>Schema validation failed</td></tr>
+                <tr><td>-32603</td><td>Internal error</td><td>Server processing error</td></tr>
+            </table>
+
+            <h3>HTTP Errors</h3>
+            <table>
+                <tr><th>Code</th><th>Meaning</th><th>Response Format</th></tr>
+                <tr><td>400</td><td>Bad Request</td><td>{"error":"Bad Request","message":"details","timestamp":"ISO_8601"}</td></tr>
+                <tr><td>500</td><td>Internal Error</td><td>{"error":"Internal server error","message":"details","timestamp":"ISO_8601"}</td></tr>
+            </table>
+        </div>
+
+        <div class="spec-section">
+            <h2>INTEGRATION EXAMPLES</h2>
+            
+            <h3>Python MCP Client</h3>
+            <pre><code>import subprocess
+import json
+
+# Start MCP server process
+process = subprocess.Popen([
+    "uv", "run", "python", "-m", "remote_mcp_server.mcp_server"
+], stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True)
+
+# Send tool discovery request
+request = {
+    "jsonrpc": "2.0",
+    "method": "tools/list",
+    "params": {},
+    "id": 1
+}
+process.stdin.write(json.dumps(request) + "\n")
+process.stdin.flush()
+
+# Read response
+response = json.loads(process.stdout.readline())
+print("Available tools:", [tool["name"] for tool in response["result"]["tools"]])</code></pre>
+
+            <h3>HTTP Client (curl)</h3>
+            <pre><code># Health check
+curl -s https://rexlaqrt59.execute-api.us-east-1.amazonaws.com/Prod/health
+
+# MCP tool call via HTTP
+curl -s -X POST https://rexlaqrt59.execute-api.us-east-1.amazonaws.com/Prod/remote-mcp-server \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","method":"tools/call","params":{"name":"hello_world","arguments":{"name":"Agent"}},"id":1}'</code></pre>
+
+            <h3>JavaScript/Node.js</h3>
+            <pre><code>async function callMcpTool(toolName, args) {
+  const response = await fetch('https://rexlaqrt59.execute-api.us-east-1.amazonaws.com/Prod/remote-mcp-server', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      jsonrpc: "2.0",
+      method: "tools/call",
+      params: { name: toolName, arguments: args },
+      id: Date.now()
+    })
+  });
+  return await response.json();
+}</code></pre>
+        </div>
+
+        <div class="spec-section">
+            <h2>DEPLOYMENT TARGETS</h2>
+            <table>
+                <tr><th>Environment</th><th>Endpoint</th><th>Purpose</th></tr>
+                <tr><td>Production</td><td>https://rexlaqrt59.execute-api.us-east-1.amazonaws.com/Prod/</td><td>Stable API</td></tr>
+                <tr><td>Local Development</td><td>http://localhost:3000/</td><td>Testing</td></tr>
+                <tr><td>Docker</td><td>http://container:8080/</td><td>Containerized</td></tr>
+            </table>
+        </div>
+
+        <div class="spec-section">
+            <h2>PERFORMANCE CHARACTERISTICS</h2>
+            <pre><code>LATENCY:
+  - Cold start: <1000ms (AWS Lambda)
+  - Warm request: <100ms
+  - Local: <10ms
+
+THROUGHPUT:
+  - AWS Lambda: 1000 concurrent executions
+  - API Gateway: 10,000 req/sec burst
+  - Local: Limited by hardware
+
+LIMITS:
+  - Request payload: 6MB (AWS Lambda)
+  - Response timeout: 30s (configurable)
+  - Tool parameter limits: see individual tool specs</code></pre>
+        </div>
+
+        <div class="spec-section">
+            <h2>MACHINE-READABLE SPECIFICATIONS</h2>
+            
+            <h3>OpenAPI Schema Location</h3>
+            <pre><code>SWAGGER_UI: Not implemented
+OPENAPI_JSON: Generate from tool schemas
+MCP_SCHEMA: Available via tools/list method</code></pre>
+
+            <h3>Configuration for AI Assistants</h3>
+            <pre><code>{
+  "mcpServers": {
+    "remote-mcp-server": {
+      "command": "uvx",
+      "args": ["remote-mcp-server@latest"],
+      "description": "Remote MCP Server with AWS Lambda compatibility"
+    }
+  }
+}</code></pre>
+        </div>
+
+        <div class="spec-section">
+            <h2>MONITORING AND OBSERVABILITY</h2>
+            <pre><code>HEALTH_CHECK: GET /health
+LOGS: CloudWatch Logs (AWS) or stdout (local)
+METRICS: Request count, duration, error rate
+TRACING: Request ID in responses
+STATUS_PAGE: Health endpoint provides service status</code></pre>
+        </div>
+    </div>
+</body>
+</html>

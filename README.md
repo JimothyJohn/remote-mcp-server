@@ -2,8 +2,7 @@
 
 A comprehensive Remote MCP (Model Context Protocol) Server with AWS Lambda compatibility, featuring dual HTTP API and MCP protocol support in a single, portable codebase.
 
-[![CI/CD Pipeline](https://github.com/yourusername/remote-mcp-server/workflows/CI/CD%20Pipeline/badge.svg)](https://github.com/yourusername/remote-mcp-server/actions)
-[![Coverage](https://img.shields.io/badge/coverage-87%25-brightgreen.svg)](https://github.com/yourusername/remote-mcp-server)
+[![Coverage](https://img.shields.io/badge/coverage-87%25-brightgreen.svg)](https://github.com/JimothyJohn/remote-mcp-server)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
@@ -52,29 +51,22 @@ The MCP server provides these tools for AI assistants:
 ### As MCP Server
 
 ```bash
-# Install dependencies
-uv sync
-
-# Run MCP server
-uv run remote-mcp-server
+# Install dependencies and run MCP server
+uv sync && uv run remote-mcp-server
 ```
 
 ### As AWS Lambda
 
 ```bash
 # Build and deploy
-sam build
-sam deploy --guided
+sam build && sam deploy --guided
 ```
 
 ### With Docker
 
 ```bash
-# Build image
-docker build -t remote-mcp-server .
-
-# Run container
-docker run -p 3000:3000 remote-mcp-server
+# Build image && run container
+docker build -t remote-mcp-server:latest . && docker run -p 3000:3000 remote-mcp-server:latest
 ```
 
 ## Installation
@@ -90,7 +82,7 @@ docker run -p 3000:3000 remote-mcp-server
 
 ```bash
 # Clone repository
-git clone https://github.com/your-org/remote-mcp-server.git
+git clone https://github.com/JimothyJohn/remote-mcp-server.git
 cd remote-mcp-server
 
 # Install dependencies with dev tools

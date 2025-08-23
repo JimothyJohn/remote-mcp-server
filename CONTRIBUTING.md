@@ -29,11 +29,11 @@ Before you begin, ensure you have the following installed:
 1. **Fork and Clone**
    ```bash
    # Fork the repository on GitHub, then clone your fork
-   git clone https://github.com/yourusername/remote-mcp-server.git
+   git clone https://github.com/JimothyJohn/remote-mcp-server.git
    cd remote-mcp-server
    
    # Add upstream remote
-   git remote add upstream https://github.com/original-owner/remote-mcp-server.git
+   git remote add upstream https://github.com/JimothyJohn/remote-mcp-server.git
    ```
 
 2. **Install Dependencies**
@@ -464,8 +464,8 @@ Thank you for contributing to Remote MCP Server! Your contributions help make AI
 
 ## 📞 Getting Help
 
-- **Issues**: [GitHub Issues](https://github.com/yourusername/remote-mcp-server/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/yourusername/remote-mcp-server/discussions)
+- **Issues**: [GitHub Issues](https://github.com/JimothyJohn/remote-mcp-server/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/JimothyJohn/remote-mcp-server/discussions)
 - **Documentation**: [Project Documentation](docs/)
 - **Examples**: [Example Configurations](examples/)
 

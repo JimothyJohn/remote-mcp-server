@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contributing - Remote MCP Server</title>
+    <meta name="description" content="Guidelines and instructions for contributing to Remote MCP Server project.">
+    <link rel="canonical" href="https://JimothyJohn.github.io/remote-mcp-server/contributing.html">
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-black: #000000;
+            --soft-black: #1a1a1a;
+            --dark-gray: #2d2d2d;
+            --medium-gray: #4a4a4a;
+            --light-gray: #6b6b6b;
+            --very-light-gray: #8a8a8a;
+            --border-gray: #e0e0e0;
+            --white: #ffffff;
+            --off-white: #f8f8f8;
+            --text-primary: var(--primary-black);
+            --text-secondary: var(--medium-gray);
+            --text-muted: var(--light-gray);
+            --bg-primary: var(--white);
+            --bg-secondary: var(--off-white);
+            --bg-tertiary: #f4f4f4;
+            --accent-color: var(--dark-gray);
+            --gradient-primary: linear-gradient(135deg, var(--primary-black), var(--dark-gray));
+            --gradient-secondary: linear-gradient(135deg, var(--medium-gray), var(--light-gray));
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.7;
+            color: var(--text-primary);
+            background: var(--dark-bg);
+        }
+        
+        /* Header */
+        .header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border-color);
+            z-index: 1000;
+        }
+        
+        .nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-decoration: none;
+        }
+        
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+        
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+        
+        .nav-links a:hover, .nav-links a.active {
+            color: var(--primary-color);
+        }
+        
+        /* Main Content */
+        .main-content {
+            margin-top: 80px;
+            padding: 2rem;
+            max-width: 1000px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .content-header {
+            margin-bottom: 3rem;
+            text-align: center;
+        }
+        
+        .content-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1rem;
+        }
+        
+        .content-subtitle {
+            color: var(--text-secondary);
+            font-size: 1.2rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        /* Typography */
+        h1, h2, h3, h4, h5, h6 {
+            color: var(--text-primary);
+            margin: 2rem 0 1rem 0;
+            line-height: 1.3;
+        }
+        
+        h1 { font-size: 2.5rem; }
+        h2 { font-size: 2rem; border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem; }
+        h3 { font-size: 1.5rem; color: var(--primary-color); }
+        h4 { font-size: 1.3rem; }
+        h5 { font-size: 1.1rem; }
+        h6 { font-size: 1rem; }
+        
+        p {
+            color: var(--text-secondary);
+            margin: 1rem 0;
+            line-height: 1.7;
+        }
+        
+        /* Lists */
+        ul, ol {
+            color: var(--text-secondary);
+            margin: 1rem 0;
+            padding-left: 2rem;
+        }
+        
+        li {
+            margin: 0.5rem 0;
+        }
+        
+        /* Links */
+        a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+        
+        a:hover {
+            color: var(--primary-dark);
+            text-decoration: underline;
+        }
+        
+        /* Code blocks */
+        pre {
+            background: var(--dark-surface);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            overflow-x: auto;
+        }
+        
+        code {
+            background: var(--dark-surface);
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 0.9rem;
+        }
+        
+        pre code {
+            background: none;
+            padding: 0;
+        }
+        
+        /* Checkboxes */
+        input[type="checkbox"] {
+            margin-right: 0.5rem;
+        }
+        
+        /* Sections */
+        .section {
+            background: var(--dark-surface);
+            border-radius: 12px;
+            padding: 2rem;
+            margin: 2rem 0;
+            border: 1px solid var(--border-color);
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .nav {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .nav-links {
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 1rem;
+            }
+            
+            .main-content {
+                padding: 1rem;
+            }
+            
+            .content-title {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <nav class="nav">
+            <a href="index.html" class="logo">Remote MCP Server</a>
+            <ul class="nav-links">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="contributing.html" class="active">Contributing</a></li>
+                <li><a href="claude.html">Claude Guide</a></li>
+                <li><a href="deployment.html">Deployment</a></li>
+                <li><a href="api.html">API</a></li>
+                <li><a href="https://github.com/JimothyJohn/remote-mcp-server">GitHub</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="main-content">
+        <div class="content-header">
+            <h1 class="content-title">Contributing to Remote MCP Server</h1>
+            <p class="content-subtitle">Thank you for your interest in contributing! This guide provides everything you need to get started.</p>
+        </div>
+
+        <div class="section">
+            <h2>🌟 Code of Conduct</h2>
+            <p>This project is committed to providing a welcoming and inclusive environment for all contributors. We expect all participants to adhere to our code of conduct:</p>
+            <ul>
+                <li>Be respectful and inclusive</li>
+                <li>Welcome newcomers and help them get started</li>
+                <li>Be constructive in discussions and code reviews</li>
+                <li>Focus on what's best for the community and project</li>
+                <li>Show empathy towards other community members</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>🚀 Getting Started</h2>
+            
+            <h3>Prerequisites</h3>
+            <p>Before you begin, ensure you have the following installed:</p>
+            <ul>
+                <li><strong>Python 3.11+</strong>: Required for development</li>
+                <li><strong>UV</strong>: Modern Python package manager (<a href="https://docs.astral.sh/uv/getting-started/installation/">installation guide</a>)</li>
+                <li><strong>Docker</strong>: For containerized development and testing</li>
+                <li><strong>Git</strong>: For version control</li>
+                <li><strong>AWS SAM CLI</strong>: For testing Lambda deployments (optional)</li>
+            </ul>
+
+            <h3>Development Setup</h3>
+            <h4>1. Fork and Clone</h4>
+            <pre><code># Fork the repository on GitHub, then clone your fork
+git clone https://github.com/JimothyJohn/remote-mcp-server.git
+cd remote-mcp-server
+
+# Add upstream remote
+git remote add upstream https://github.com/JimothyJohn/remote-mcp-server.git</code></pre>
+
+            <h4>2. Install Dependencies</h4>
+            <pre><code># Install all dependencies including development tools
+uv sync --group dev
+
+# Install pre-commit hooks
+uv run pre-commit install</code></pre>
+
+            <h4>3. Verify Setup</h4>
+            <pre><code># Run tests to ensure everything works
+./scripts/test.sh
+
+# Start the MCP server
+uv run python -m remote_mcp_server.mcp_server --help</code></pre>
+        </div>
+
+        <div class="section">
+            <h2>🔧 Development Workflow</h2>
+            
+            <h3>Branch Naming</h3>
+            <p>Use descriptive branch names with prefixes:</p>
+            <ul>
+                <li><code>feature/add-new-tool</code> - New features</li>
+                <li><code>fix/handle-error-case</code> - Bug fixes</li>
+                <li><code>docs/update-readme</code> - Documentation updates</li>
+                <li><code>refactor/simplify-handler</code> - Code refactoring</li>
+                <li><code>test/improve-coverage</code> - Test improvements</li>
+            </ul>
+
+            <h3>Making Changes</h3>
+            <h4>1. Create Feature Branch</h4>
+            <pre><code>git checkout -b feature/your-feature-name</code></pre>
+
+            <h4>2. Make Your Changes</h4>
+            <ul>
+                <li>Write clear, focused commits</li>
+                <li>Include tests for new functionality</li>
+                <li>Update documentation as needed</li>
+                <li>Follow the existing code style</li>
+            </ul>
+
+            <h4>3. Test Your Changes</h4>
+            <pre><code># Run full test suite
+./scripts/test.sh
+
+# Run specific test categories
+uv run pytest tests/unit/
+uv run pytest tests/integration/
+
+# Check code quality
+uv run ruff check .
+uv run black --check .
+uv run mypy remote_mcp_server/</code></pre>
+
+            <h4>4. Commit and Push</h4>
+            <pre><code>git add .
+git commit -m "feat: add new MCP tool for data processing"
+git push origin feature/your-feature-name</code></pre>
+        </div>
+
+        <div class="section">
+            <h2>📝 Commit Message Convention</h2>
+            <p>We follow <a href="https://www.conventionalcommits.org/">Conventional Commits</a>:</p>
+            <pre><code>type(scope): description
+
+[optional body]
+
+[optional footer]</code></pre>
+
+            <h3>Types:</h3>
+            <ul>
+                <li><strong>feat</strong>: New feature</li>
+                <li><strong>fix</strong>: Bug fix</li>
+                <li><strong>docs</strong>: Documentation changes</li>
+                <li><strong>style</strong>: Code style changes (formatting, etc.)</li>
+                <li><strong>refactor</strong>: Code refactoring</li>
+                <li><strong>test</strong>: Adding or updating tests</li>
+                <li><strong>chore</strong>: Build process or auxiliary tool changes</li>
+            </ul>
+
+            <h3>Examples:</h3>
+            <pre><code>feat(tools): add data validation tool
+fix(lambda): handle empty request body
+docs(readme): update deployment instructions
+test(integration): add API Gateway tests</code></pre>
+        </div>
+
+        <div class="section">
+            <h2>🧪 Testing Guidelines</h2>
+            
+            <h3>Test Structure</h3>
+            <pre><code>tests/
+├── unit/                    # Unit tests
+│   ├── test_mcp_server.py  # Core MCP server tests
+│   └── test_handler.py     # Lambda handler tests
+├── integration/            # Integration tests
+│   ├── test_mcp_integration.py   # End-to-end MCP tests
+│   └── test_api_gateway.py       # API Gateway tests
+└── conftest.py            # Shared test fixtures</code></pre>
+
+            <h3>Writing Tests</h3>
+            <h4>1. Unit Tests</h4>
+            <ul>
+                <li>Test individual functions and classes</li>
+                <li>Mock external dependencies</li>
+                <li>Aim for high coverage of core logic</li>
+            </ul>
+
+            <h4>2. Integration Tests</h4>
+            <ul>
+                <li>Test complete workflows</li>
+                <li>Test API endpoints end-to-end</li>
+                <li>Test MCP protocol interactions</li>
+            </ul>
+
+            <h3>Running Tests</h3>
+            <pre><code># All tests with coverage
+./scripts/test.sh
+
+# Specific test files
+uv run pytest tests/unit/test_mcp_server.py -v
+
+# Tests with specific markers
+uv run pytest -m "not slow" -v
+
+# Integration tests (requires AWS setup)
+export AWS_SAM_STACK_NAME=remote-mcp-server
+uv run pytest tests/integration/ -v</code></pre>
+        </div>
+
+        <div class="section">
+            <h2>🔍 Code Quality Standards</h2>
+            
+            <h3>Code Style</h3>
+            <p>We use automated tools to maintain consistent code quality:</p>
+            <ul>
+                <li><strong>Ruff</strong>: Fast Python linter for code quality</li>
+                <li><strong>Black</strong>: Uncompromising code formatter</li>
+                <li><strong>MyPy</strong>: Static type checking</li>
+                <li><strong>Pre-commit</strong>: Automated checks before commits</li>
+            </ul>
+
+            <h3>Quality Checks</h3>
+            <p>All code must pass these checks:</p>
+            <pre><code># Linting
+uv run ruff check .
+
+# Formatting  
+uv run black --check .
+
+# Type checking
+uv run mypy remote_mcp_server/
+
+# Security scanning
+uv run safety check</code></pre>
+        </div>
+
+        <div class="section">
+            <h2>🚀 Pull Request Process</h2>
+            
+            <h3>Before Submitting</h3>
+            <p>Check requirements:</p>
+            <ul>
+                <li>☐ All tests pass</li>
+                <li>☐ Code follows style guidelines</li>
+                <li>☐ Documentation is updated</li>
+                <li>☐ No merge conflicts</li>
+                <li>☐ Commit messages follow convention</li>
+            </ul>
+
+            <h3>Self Review</h3>
+            <ul>
+                <li>☐ Code is clear and well-commented</li>
+                <li>☐ Edge cases are handled</li>
+                <li>☐ Error handling is appropriate</li>
+                <li>☐ Performance impact is considered</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>📞 Getting Help</h2>
+            <ul>
+                <li><strong>Issues</strong>: <a href="https://github.com/JimothyJohn/remote-mcp-server/issues">GitHub Issues</a></li>
+                <li><strong>Discussions</strong>: <a href="https://github.com/JimothyJohn/remote-mcp-server/discussions">GitHub Discussions</a></li>
+                <li><strong>Documentation</strong>: <a href="./">Project Documentation</a></li>
+                <li><strong>Examples</strong>: <a href="https://github.com/JimothyJohn/remote-mcp-server/tree/main/examples">Example Configurations</a></li>
+            </ul>
+            <p><strong>Happy coding! 🎉</strong></p>
+        </div>
+    </main>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+</body>
+</html>

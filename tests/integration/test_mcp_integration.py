@@ -1,227 +1,125 @@
 """Integration tests for MCP server functionality."""
 
-import asyncio
 import json
-from unittest.mock import AsyncMock, patch
-
 import pytest
 
-from remote_mcp_server.mcp_server import handle_mcp_request, mcp
+from remote_mcp_server.server import create_mcp_server
+from remote_mcp_server.config import ServerConfig
+from remote_mcp_server.aws_lambda import LambdaHandler
 
 
 @pytest.mark.integration
 class TestMCPIntegration:
     """Integration tests for MCP server."""
 
-    @pytest.mark.asyncio
-    async def test_mcp_server_tools_registration(self):
-        """Test that all expected tools are registered with the MCP server."""
-        # Get list of tools from the server
-        tools = await mcp.list_tools()
+    def test_mcp_server_creation_and_lambda_integration(self):
+        """Test MCP server creation integrates properly with Lambda handler."""
+        config = ServerConfig(environment="test")
+        
+        # Create MCP server
+        mcp_server = create_mcp_server(config)
+        assert mcp_server is not None
+        assert mcp_server.name == "remote-mcp-server"
+        
+        # Create Lambda handler
+        lambda_handler = LambdaHandler(config)
+        assert lambda_handler is not None
 
-        tool_names = [tool.name for tool in tools]
-
-        # Verify expected tools are present
+    def test_full_mcp_request_flow(self):
+        """Test complete MCP request flow through Lambda handler."""
+        config = ServerConfig(environment="test")
+        handler = LambdaHandler(config)
+        
+        # Test tools/list request
+        event = {
+            "httpMethod": "POST",
+            "path": "/",
+            "body": json.dumps({
+                "jsonrpc": "2.0",
+                "method": "tools/list",
+                "id": 1
+            })
+        }
+        context = {}
+        
+        response = handler(event, context)
+        
+        assert response["statusCode"] == 200
+        response_data = json.loads(response["body"])
+        
+        assert response_data["jsonrpc"] == "2.0"
+        assert "result" in response_data
+        assert "tools" in response_data["result"]
+        
+        # Verify expected tools are listed
+        tools = response_data["result"]["tools"]
+        tool_names = [tool["name"] for tool in tools]
+        
         expected_tools = [
             "hello_world",
-            "get_current_time",
+            "get_current_time", 
             "echo_message",
             "get_server_info",
-            "calculate_sum",
+            "calculate_sum"
         ]
+        
+        for expected_tool in expected_tools:
+            assert expected_tool in tool_names, f"Tool {expected_tool} not found in {tool_names}"
 
-        for tool_name in expected_tools:
-            assert (
-                tool_name in tool_names
-            ), f"Tool {tool_name} not found in registered tools"
-
-    @pytest.mark.asyncio
-    async def test_tool_schema_validation(self):
-        """Test that tool schemas are properly defined."""
-        tools = await mcp.list_tools()
-
-        for tool in tools:
-            # Each tool should have a name and description
-            assert tool.name is not None
-            assert tool.description is not None
-            assert len(tool.description.strip()) > 0
-
-            # Each tool should have an input schema
-            assert tool.inputSchema is not None
-            assert "type" in tool.inputSchema
-            assert tool.inputSchema["type"] == "object"
-
-    @pytest.mark.asyncio
-    async def test_hello_world_tool_execution(self):
-        """Test hello_world tool execution through MCP."""
-        # Simulate a tool call request
-        request = {
-            "jsonrpc": "2.0",
-            "method": "tools/call",
-            "params": {
-                "name": "hello_world",
-                "arguments": {"name": "Integration Test"},
-            },
-            "id": 1,
-        }
-
-        # This is a basic integration test - in a real scenario,
-        # we'd need to set up proper MCP protocol handling
-        response = await handle_mcp_request(request)
-
-        assert response["jsonrpc"] == "2.0"
-        assert "result" in response or "error" in response
-
-    @pytest.mark.asyncio
-    async def test_get_server_info_tool_execution(self):
-        """Test get_server_info tool execution."""
-        request = {
-            "jsonrpc": "2.0",
-            "method": "tools/call",
-            "params": {"name": "get_server_info", "arguments": {}},
-            "id": 2,
-        }
-
-        response = await handle_mcp_request(request)
-
-        assert response["jsonrpc"] == "2.0"
-        # The response should indicate success or contain error details
-        assert "result" in response or "error" in response
-
-    @pytest.mark.asyncio
-    async def test_calculate_sum_tool_execution(self):
-        """Test calculate_sum tool execution."""
-        request = {
-            "jsonrpc": "2.0",
-            "method": "tools/call",
-            "params": {
-                "name": "calculate_sum",
-                "arguments": {"numbers": [1, 2, 3, 4, 5]},
-            },
-            "id": 3,
-        }
-
-        response = await handle_mcp_request(request)
-
-        assert response["jsonrpc"] == "2.0"
-        assert "result" in response or "error" in response
-
-    @pytest.mark.asyncio
-    async def test_invalid_tool_request(self):
-        """Test handling of invalid tool requests."""
-        request = {
-            "jsonrpc": "2.0",
-            "method": "tools/call",
-            "params": {"name": "nonexistent_tool", "arguments": {}},
-            "id": 4,
-        }
-
-        response = await handle_mcp_request(request)
-
-        # Should return an error response
-        assert response["jsonrpc"] == "2.0"
-        # For now, our basic handler returns success, but in a real implementation
-        # this should return an error
-        assert "result" in response or "error" in response
-
-    @pytest.mark.asyncio
-    async def test_malformed_request(self):
-        """Test handling of malformed requests."""
-        malformed_request = {"not_jsonrpc": "invalid", "missing_method": True}
-
-        response = await handle_mcp_request(malformed_request)
-
-        assert response["jsonrpc"] == "2.0"
-        # Should contain error information
-        if "error" in response:
-            assert response["error"]["code"] == -32603  # Internal error
-
-    @pytest.mark.asyncio
-    async def test_server_instructions(self):
-        """Test that server instructions are properly set."""
-        assert mcp.instructions is not None
-        assert "simple mcp server" in mcp.instructions.lower()
-        assert "aws lambda" in mcp.instructions.lower()
-
-    @pytest.mark.asyncio
-    async def test_server_version(self):
-        """Test that server version is accessible."""
-        # FastMCP doesn't have a version attribute, but we can test the version from our package
-        from remote_mcp_server import __version__
-
-        assert __version__ == "1.0.0"
-
-    @pytest.mark.asyncio
-    async def test_server_name(self):
-        """Test that server name is properly set."""
-        assert mcp.name == "remote-mcp-server"
-
-
-@pytest.mark.integration
-class TestEndToEndIntegration:
-    """End-to-end integration tests."""
-
-    def test_lambda_and_mcp_compatibility(
-        self, sample_api_gateway_event, lambda_context
-    ):
-        """Test that Lambda handler and MCP server work together."""
-        from remote_mcp_server.mcp_server import lambda_handler
-
-        # Test API Gateway request
-        result = lambda_handler(sample_api_gateway_event, lambda_context)
-
-        assert result["statusCode"] == 200
-        body = json.loads(result["body"])
-        assert body["message"] == "remote-mcp-server"
-        assert body["version"] == "1.0.0"
-
-    def test_health_check_integration(self, sample_health_check_event, lambda_context):
-        """Test health check endpoint integration."""
-        from remote_mcp_server.mcp_server import lambda_handler
-
-        result = lambda_handler(sample_health_check_event, lambda_context)
-
-        assert result["statusCode"] == 200
-        body = json.loads(result["body"])
-        assert body["status"] == "healthy"
-        assert body["service"] == "remote-mcp-server"
-
-    @pytest.mark.asyncio
-    async def test_tool_discovery_integration(self):
-        """Test tool discovery through MCP protocol."""
-        # Test that we can discover available tools
-        tools = await mcp.list_tools()
-
-        assert len(tools) > 0
-
-        # Verify we have the basic tools
-        tool_names = [tool.name for tool in tools]
-        assert "hello_world" in tool_names
-        assert "get_current_time" in tool_names
-        assert "get_server_info" in tool_names
-
-    @pytest.mark.slow
-    @pytest.mark.asyncio
-    async def test_concurrent_requests(self):
-        """Test handling of concurrent MCP requests."""
-        # Create multiple concurrent requests
-        requests = [
-            {
+    def test_mcp_error_handling_integration(self):
+        """Test MCP error handling integration."""
+        config = ServerConfig(environment="test")
+        handler = LambdaHandler(config)
+        
+        # Test invalid method
+        event = {
+            "httpMethod": "POST",
+            "path": "/",
+            "body": json.dumps({
                 "jsonrpc": "2.0",
-                "method": "tools/call",
-                "params": {"name": "hello_world", "arguments": {"name": f"User{i}"}},
-                "id": i,
-            }
-            for i in range(10)
-        ]
+                "method": "nonexistent_method",
+                "id": 1
+            })
+        }
+        context = {}
+        
+        response = handler(event, context)
+        
+        assert response["statusCode"] == 200
+        response_data = json.loads(response["body"])
+        
+        assert response_data["jsonrpc"] == "2.0"
+        assert "error" in response_data
+        assert response_data["error"]["code"] == -32601  # Method not found
+        assert "available_methods" in response_data["error"]["data"]
 
-        # Execute requests concurrently
-        tasks = [handle_mcp_request(req) for req in requests]
-        responses = await asyncio.gather(*tasks)
-
-        # Verify all responses
-        for response in responses:
-            assert response["jsonrpc"] == "2.0"
-            assert "result" in response or "error" in response
-
-        assert len(responses) == 10
+    def test_configuration_integration(self):
+        """Test configuration integration across components."""
+        custom_config = ServerConfig(
+            port=8080,
+            log_level="DEBUG",
+            environment="integration-test",
+            version="test-version"
+        )
+        
+        # Create components with custom config
+        mcp_server = create_mcp_server(custom_config)
+        lambda_handler = LambdaHandler(custom_config)
+        
+        # Test that configuration is properly used
+        assert lambda_handler.config.environment == "integration-test"
+        assert lambda_handler.config.version == "test-version"
+        assert lambda_handler.config.port == 8080
+        
+        # Test health check reflects configuration
+        event = {
+            "httpMethod": "GET",
+            "path": "/health",
+            "body": None
+        }
+        context = {}
+        
+        response = lambda_handler(event, context)
+        response_data = json.loads(response["body"])
+        
+        assert response_data["version"] == "test-version"
