@@ -4,13 +4,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a **Model Context Protocol (MCP) server** with **AWS Lambda compatibility**. It demonstrates how to build AI-compatible tools that can run both as standalone MCP servers for AI assistants and as AWS serverless functions. The project uses Python 3.11+ and follows modern development practices with comprehensive testing, CI/CD, and Docker support.
+This is a **Model Context Protocol (MCP) server** with **AWS Lambda compatibility**. It demonstrates how to build AI-compatible tools that can run both as standalone MCP servers for AI assistants and as AWS serverless functions. The project uses Python 3.11+ and follows modern dev practices with comprehensive testing, CI/CD, and Docker support.
 
 ## Architecture
 
 ### Core Components
-- **MCP Server**: `remote_mcp_server/mcp_server.py` - Main MCP server with tool definitions
-- **Lambda Handler**: `remote-mcp-server/app.py` - AWS Lambda wrapper (backward compatibility)
+- **MCP Server**: `aegis/mcp_server.py` - Main MCP server with tool definitions
+- **Lambda Handler**: `aegis/app.py` - AWS Lambda wrapper (backward compatibility)
 - **Entry Points**: Both MCP server and Lambda function entry points
 - **Infrastructure**: Defined in `template.yaml` using AWS SAM format
 - **Configuration**: SAM deployment settings in `samconfig.toml`, project config in `pyproject.toml`
@@ -28,14 +28,14 @@ The application can run as:
 # Install all dependencies with dev tools
 uv sync --group dev
 
-# Install for production only
+# Install for prod only
 uv sync
 
 # Run MCP server locally
-uv run remote-mcp-server
+uv run aegis
 
 # Run with custom settings
-uv run remote-mcp-server --port 8000 --log-level DEBUG
+uv run aegis --port 8000 --log-level DEBUG
 ```
 
 ### Testing (Comprehensive Suite)
@@ -47,10 +47,10 @@ uv run remote-mcp-server --port 8000 --log-level DEBUG
 uv run pytest tests/unit/ -v
 
 # Run integration tests (requires deployed stack)
-AWS_SAM_STACK_NAME=remote-mcp-server uv run pytest tests/integration/ -m integration
+AWS_SAM_STACK_NAME=aegis uv run pytest tests/integration/ -m integration
 
 # Run with coverage reporting
-uv run pytest --cov=remote_mcp_server --cov-report=html
+uv run pytest --cov=aegis --cov-report=html
 
 # Run specific test types
 uv run pytest -m "not slow"  # Skip slow tests
@@ -85,7 +85,7 @@ sam validate --lint
 # Deploy to AWS
 sam deploy --guided
 
-# Local development
+# Local dev
 sam local start-api           # Start API Gateway locally
 sam local start-lambda        # Start Lambda locally
 sam local invoke             # Invoke function locally
@@ -97,13 +97,13 @@ sam deploy --parameter-overrides Environment=staging
 ### Docker Operations
 ```bash
 # Build Docker image
-docker build -t remote-mcp-server .
+docker build -t aegis .
 
 # Run container
-docker run -p 3000:3000 remote-mcp-server
+docker run -p 3000:3000 aegis
 
 # Run with environment variables
-docker run -e LOG_LEVEL=DEBUG -p 3000:3000 remote-mcp-server
+docker run -e LOG_LEVEL=DEBUG -p 3000:3000 aegis
 
 # Docker Compose
 docker-compose up -d          # Start services
@@ -114,17 +114,17 @@ docker-compose down           # Stop services
 ## Key Files Structure
 
 ### Core Application
-- `remote_mcp_server/mcp_server.py` - Main MCP server implementation with tools
-- `remote_mcp_server/__init__.py` - Package initialization and version info
-- `remote-mcp-server/app.py` - Lambda handler wrapper for backward compatibility
-- `main.py` - Local development entry point (legacy)
+- `aegis/mcp_server.py` - Main MCP server implementation with tools
+- `aegis/__init__.py` - Package initialization and version info
+- `aegis/app.py` - Lambda handler wrapper for backward compatibility
+- `main.py` - Local dev entry point (legacy)
 
 ### Configuration
 - `pyproject.toml` - Project dependencies, build config, tool settings
 - `template.yaml` - SAM template defining AWS resources  
 - `samconfig.toml` - SAM CLI configuration and deployment parameters
 - `Dockerfile` - Container build configuration
-- `docker-compose.yml` - Local development environment
+- `docker-compose.yml` - Local dev environment
 
 ### Testing
 - `tests/conftest.py` - Pytest configuration and shared fixtures
@@ -138,12 +138,12 @@ docker-compose down           # Stop services
 - `scripts/test.sh` - Comprehensive test and quality check script
 - `scripts/build.sh` - Build application and Docker image
 - `scripts/deploy.sh` - Deploy with validation
-- `scripts/local-dev.sh` - Local development environment setup
+- `scripts/local-dev.sh` - Local dev environment setup
 
 ### Documentation
 - `README.md` - Comprehensive project documentation
 - `MCP.md` - MCP architecture analysis and transformation guide
-- `CLAUDE.md` - This file (development guidance)
+- `CLAUDE.md` - This file (dev guidance)
 
 ## MCP Tools Available
 
@@ -167,7 +167,7 @@ The server provides these tools for AI assistants:
 - `@pytest.mark.unit` - Fast unit tests
 - `@pytest.mark.integration` - Integration tests requiring services
 - `@pytest.mark.slow` - Tests taking >1 second
-- Use `-m "not slow"` to skip time-consuming tests during development
+- Use `-m "not slow"` to skip time-consuming tests during dev
 
 ### Coverage Requirements
 - Minimum 80% code coverage
@@ -180,7 +180,7 @@ The server provides these tools for AI assistants:
 1. Install dependencies: `uv sync --group dev`
 2. Install pre-commit hooks: `pre-commit install`
 3. Run tests: `./scripts/test.sh`
-4. Start MCP server: `uv run remote-mcp-server`
+4. Start MCP server: `uv run aegis`
 5. Test with MCP client or curl commands
 
 ### Deployment Workflow
@@ -198,13 +198,13 @@ The GitHub Actions workflow runs:
 4. Build Docker image and SAM artifacts
 5. Deploy to staging environment
 6. Run integration tests
-7. Deploy to production (on main branch)
+7. Deploy to prod (on main branch)
 
 ## Environment Variables
 
 ### Development
 - `LOG_LEVEL` - Logging level (DEBUG, INFO, WARNING, ERROR)
-- `ENVIRONMENT` - Environment name (development, staging, production)
+- `ENVIRONMENT` - Environment name (dev, staging, prod)
 - `PORT` - Server port for MCP server (default: 3000)
 
 ### Testing  

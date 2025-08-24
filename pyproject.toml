@@ -1,23 +1,28 @@
 [project]
 name = "remote-mcp-server"
 version = "1.0.0"
-description = "A comprehensive Remote MCP Server with AWS Lambda compatibility, featuring dual HTTP API and MCP protocol support"
+description = "Revolutionary AI Infrastructure Platform by advin.io - Patent-pending dual-protocol serverless AI orchestration with enterprise-grade scalability"
 readme = "README.md"
 requires-python = ">=3.11"
 authors = [
+    {name = "advin.io Research Lab", email = "research@advin.io"},
     {name = "Nick Armenta", email = "nick@advin.io"},
 ]
 maintainers = [
-    {name = "Nick Armenta", email = "nick@advin.io"},
+    {name = "advin.io Engineering Team", email = "engineering@advin.io"},
 ]
 license = {text = "MIT"}
 keywords = [
-    "mcp", "model-context-protocol", "aws-lambda", "serverless", "ai", "assistant", 
-    "api", "http", "json-rpc", "docker", "fastmcp", "anthropic"
+    "ai-infrastructure", "enterprise-ai", "serverless-ai", "mcp-protocol", 
+    "ai-orchestration", "aws-lambda", "enterprise-scalability", "ai-platform",
+    "serverless-architecture", "dual-protocol", "ai-agents", "enterprise-ready",
+    "patent-pending", "innovation", "advin-io", "dallas-tech"
 ]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology", 
+    "Intended Audience :: Financial and Insurance Industry",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
@@ -26,9 +31,14 @@ classifiers = [
     "Topic :: Internet :: WWW/HTTP :: HTTP Servers",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: System :: Distributed Computing",
+    "Topic :: System :: Networking",
+    "Topic :: Office/Business :: Financial :: Investment",
     "Environment :: Web Environment",
+    "Environment :: No Input/Output (Daemon)",
     "Framework :: FastAPI",
     "Typing :: Typed",
+    "Natural Language :: English",
 ]
 dependencies = [
     "mcp[cli]>=1.11.0",
@@ -37,18 +47,26 @@ dependencies = [
     "requests>=2.32.3",
     "fastapi>=0.104.0",
     "uvicorn>=0.24.0",
+    "pyyaml>=6.0.0",
+    "jsonschema>=4.20.0",
+    "stripe>=7.0.0",
 ]
 
 [project.urls]
-Homepage = "https://github.com/JimothyJohn/remote-mcp-server"
+Homepage = "https://advin.io"
+"Product Page" = "https://github.com/JimothyJohn/remote-mcp-server"
 Documentation = "https://github.com/JimothyJohn/remote-mcp-server/blob/main/docs/"
 Repository = "https://github.com/JimothyJohn/remote-mcp-server.git"
 Issues = "https://github.com/JimothyJohn/remote-mcp-server/issues"
 Changelog = "https://github.com/JimothyJohn/remote-mcp-server/blob/main/CHANGELOG.md"
-"Live Demo" = "https://rexlaqrt59.execute-api.us-east-1.amazonaws.com/Prod/"
+"Live Infrastructure" = "https://rexlaqrt59.execute-api.us-east-1.amazonaws.com/Prod/"
+"Enterprise Solutions" = "https://advin.io/enterprise"
+"Investment Opportunities" = "mailto:investors@advin.io"
+"Technical Support" = "mailto:support@advin.io"
 
 [project.scripts]
 "remote-mcp-server" = "remote_mcp_server.mcp_server:main"
+"rmcp" = "remote_mcp_server.mcp_server:main"
 
 
 [dependency-groups]
@@ -62,6 +80,9 @@ dev = [
     "mypy>=1.7.0",
     "pre-commit>=3.5.0",
     "pytest-xdist>=3.8.0",
+    "types-PyYAML>=6.0.0",
+    "safety>=3.0.0",
+    "bandit[toml]>=1.7.0",
 ]
 test = [
     "pytest>=8.0.0",

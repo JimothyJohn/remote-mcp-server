@@ -223,7 +223,7 @@ fi
 log_section "Docker Build Test"
 if command -v docker &> /dev/null; then
     log_info "Testing Docker build..."
-    if docker build -t remote-mcp-server-test --target production . >/dev/null 2>&1; then
+    if docker build -t remote-mcp-server-test --target prod . >/dev/null 2>&1; then
         log_success "Docker build successful"
         docker rmi remote-mcp-server-test >/dev/null 2>&1 || true
     else

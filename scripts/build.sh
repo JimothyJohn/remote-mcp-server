@@ -127,7 +127,7 @@ if [[ "$BUILD_DOCKER" == "true" ]]; then
         log_warning "Docker not available, skipping Docker build"
     else
         log_info "Building production Docker image..."
-        if docker build -t "${DOCKER_TAG}:latest" --target production .; then
+        if docker build -t "${DOCKER_TAG}:latest" --target prod .; then
             log_success "Production Docker image built: ${DOCKER_TAG}:latest"
         else
             log_error "Docker build failed"
@@ -135,7 +135,7 @@ if [[ "$BUILD_DOCKER" == "true" ]]; then
         fi
         
         log_info "Building development Docker image..."
-        if docker build -t "${DOCKER_TAG}:dev" --target development .; then
+        if docker build -t "${DOCKER_TAG}:dev" --target dev .; then
             log_success "Development Docker image built: ${DOCKER_TAG}:dev"
         else
             log_warning "Development Docker image build failed"

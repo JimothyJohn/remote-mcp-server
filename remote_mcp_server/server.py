@@ -24,7 +24,7 @@ def create_mcp_server(config: ServerConfig) -> FastMCP:
     """Create and configure MCP server."""
     mcp = FastMCP(
         "remote-mcp-server",
-        instructions="A simple MCP server demonstrating basic operations and AWS Lambda compatibility.",
+        instructions="Remote MCP Server - A comprehensive MCP server demonstrating advanced operations and AWS Lambda compatibility.",
     )
     
     # Register all tools

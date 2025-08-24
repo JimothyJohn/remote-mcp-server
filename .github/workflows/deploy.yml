@@ -10,7 +10,6 @@ on:
 
 env:
   PYTHON_VERSION: '3.11'
-  UV_VERSION: '0.4.x'
 
 jobs:
   # Code Quality and Testing
@@ -31,9 +30,10 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
           
       - name: Install uv
-        uses: astral-sh/setup-uv@v2
+        uses: astral-sh/setup-uv@v3
         with:
-          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+          cache-dependency-glob: "pyproject.toml"
           
       - name: Install dependencies
         run: uv sync --group dev
@@ -87,9 +87,10 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
           
       - name: Install uv
-        uses: astral-sh/setup-uv@v2
+        uses: astral-sh/setup-uv@v3
         with:
-          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+          cache-dependency-glob: "pyproject.toml"
           
       - name: Install dependencies
         run: uv sync --group dev
@@ -104,7 +105,6 @@ jobs:
           
       - name: Run bandit security scan
         run: |
-          uv add bandit[toml]
           uv run bandit -r remote_mcp_server/ -f json -o bandit-report.json || true
           if [ -f bandit-report.json ]; then
             echo "Bandit report generated"
@@ -135,9 +135,10 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
           
       - name: Install uv
-        uses: astral-sh/setup-uv@v2
+        uses: astral-sh/setup-uv@v3
         with:
-          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+          cache-dependency-glob: "pyproject.toml"
           
       - name: Install dependencies
         run: uv sync
@@ -182,7 +183,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          target: production
+          target: prod
           tags: remote-mcp-server:test
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -220,7 +221,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          target: production
+          target: prod
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -303,9 +304,10 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
           
       - name: Install uv
-        uses: astral-sh/setup-uv@v2
+        uses: astral-sh/setup-uv@v3
         with:
-          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+          cache-dependency-glob: "pyproject.toml"
           
       - name: Install dependencies
         run: uv sync --group test
@@ -333,11 +335,99 @@ jobs:
           name: integration-test-results
           path: integration-test-results.xml
 
+  # Deploy Documentation to S3
+  deploy-docs:
+    name: Deploy Documentation to S3
+    runs-on: ubuntu-latest
+    needs: [quality]
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
+          
+      - name: Validate docs folder exists
+        run: |
+          if [ ! -d "docs" ]; then
+            echo "Error: docs/ folder not found"
+            exit 1
+          fi
+          echo "docs/ folder found with $(find docs -name '*.html' | wc -l) HTML files"
+          
+      - name: Sync docs to S3
+        run: |
+          aws s3 sync docs/ s3://advin-env/remote-mcp-server/ \
+            --delete \
+            --cache-control "max-age=300" \
+            --metadata-directive REPLACE \
+            --exclude "*.md" \
+            --exclude ".*"
+            
+      - name: Set correct content types
+        run: |
+          # Set content types for web files
+          aws s3 cp s3://advin-env/remote-mcp-server/ s3://advin-env/remote-mcp-server/ \
+            --recursive \
+            --metadata-directive REPLACE \
+            --content-type "text/html" \
+            --exclude "*" \
+            --include "*.html"
+            
+          aws s3 cp s3://advin-env/remote-mcp-server/ s3://advin-env/remote-mcp-server/ \
+            --recursive \
+            --metadata-directive REPLACE \
+            --content-type "text/css" \
+            --exclude "*" \
+            --include "*.css"
+            
+          aws s3 cp s3://advin-env/remote-mcp-server/ s3://advin-env/remote-mcp-server/ \
+            --recursive \
+            --metadata-directive REPLACE \
+            --content-type "application/javascript" \
+            --exclude "*" \
+            --include "*.js"
+            
+          aws s3 cp s3://advin-env/remote-mcp-server/ s3://advin-env/remote-mcp-server/ \
+            --recursive \
+            --metadata-directive REPLACE \
+            --content-type "application/x-yaml" \
+            --exclude "*" \
+            --include "*.yaml"
+            
+          aws s3 cp s3://advin-env/remote-mcp-server/ s3://advin-env/remote-mcp-server/ \
+            --recursive \
+            --metadata-directive REPLACE \
+            --content-type "application/x-yaml" \
+            --exclude "*" \
+            --include "*.yml"
+            
+      - name: Verify deployment
+        run: |
+          echo "Documentation deployed to S3 bucket: advin-env/remote-mcp-server"
+          echo "Files deployed:"
+          aws s3 ls s3://advin-env/remote-mcp-server/ --recursive --human-readable
+          
+      - name: Create deployment summary
+        run: |
+          echo "## 📚 Documentation Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- **S3 Bucket**: advin-env/remote-mcp-server" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Files Deployed**: $(aws s3 ls s3://advin-env/remote-mcp-server/ --recursive | wc -l)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Deployment Time**: $(date -u)" >> $GITHUB_STEP_SUMMARY
+
   # Deploy to Production
-  deploy-production:
+  deploy-prod:
     name: Deploy to Production
     runs-on: ubuntu-latest
-    needs: [integration-tests]
+    needs: [integration-tests, deploy-docs]
     
     steps:
       - name: Checkout code
@@ -361,14 +451,14 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_PROD_SECRET_ACCESS_KEY }}
           aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
           
-      - name: Deploy to production
+      - name: Deploy to prod
         run: |
           sam deploy \
             --stack-name remote-mcp-server-prod \
             --region ${{ vars.AWS_REGION || 'us-east-1' }} \
             --capabilities CAPABILITY_IAM \
-            --parameter-overrides Environment=production \
-            --tags Environment=production Project=remote-mcp-server \
+            --parameter-overrides Environment=prod \
+            --tags Environment=prod Project=remote-mcp-server \
             --no-confirm-changeset \
             --no-fail-on-empty-changeset
             
@@ -397,7 +487,7 @@ jobs:
   cleanup-on-failure:
     name: Cleanup Failed Deployment
     runs-on: ubuntu-latest
-    needs: [deploy-staging, integration-tests, deploy-production]
+    needs: [deploy-staging, integration-tests, deploy-prod]
     if: failure() && (github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main')
     
     steps:

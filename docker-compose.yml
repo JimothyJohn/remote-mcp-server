@@ -3,12 +3,12 @@ services:
   remote-mcp-server:
     build: 
       context: .
-      target: development
+      target: dev
     ports:
       - "3000:3000"
     environment:
       - LOG_LEVEL=DEBUG
-      - ENVIRONMENT=development
+      - ENVIRONMENT=dev
       - PORT=3000
     volumes:
       # Mount source code for development
@@ -26,12 +26,12 @@ services:
   remote-mcp-server-prod:
     build: 
       context: .
-      target: production
+      target: prod
     ports:
       - "3001:3000"
     environment:
       - LOG_LEVEL=INFO
-      - ENVIRONMENT=production
+      - ENVIRONMENT=prod
       - PORT=3000
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
@@ -47,7 +47,7 @@ services:
   test-runner:
     build: 
       context: .
-      target: development
+      target: dev
     volumes:
       - .:/app
       - /app/.venv  # Exclude virtual environment
@@ -62,7 +62,7 @@ services:
   linter:
     build: 
       context: .
-      target: development
+      target: dev
     volumes:
       - .:/app
       - /app/.venv  # Exclude virtual environment

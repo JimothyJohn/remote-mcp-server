@@ -40,7 +40,7 @@ class TestServerConfig:
         
         assert config.port == 3000
         assert config.log_level == "INFO"
-        assert config.environment == "development"
+        assert config.environment == "dev"
         assert config.version == "1.0.0"
         assert config.memory_limit == 256
         assert config.timeout == 30
@@ -50,12 +50,12 @@ class TestServerConfig:
         config = ServerConfig(
             port=8080,
             log_level="DEBUG",
-            environment="production"
+            environment="prod"
         )
         
         assert config.port == 8080
         assert config.log_level == "DEBUG"
-        assert config.environment == "production"
+        assert config.environment == "prod"
 
     def test_config_from_env(self, monkeypatch):
         """Test configuration from environment variables."""

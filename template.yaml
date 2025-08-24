@@ -7,7 +7,7 @@ Parameters:
   Environment:
     Type: String
     Default: staging
-    AllowedValues: [development, staging, production]
+    AllowedValues: [dev, staging, prod]
     Description: Deployment environment
   
   LogLevel:
@@ -15,6 +15,11 @@ Parameters:
     Default: INFO
     AllowedValues: [DEBUG, INFO, WARNING, ERROR]
     Description: Application log level
+  
+  StripeSecretKey:
+    Type: String
+    NoEcho: true
+    Description: Stripe secret key for payment processing
 
 # More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
 Globals:
@@ -27,42 +32,141 @@ Globals:
       Variables:
         LOG_LEVEL: !Ref LogLevel
         ENVIRONMENT: !Ref Environment
+        STRIPE_SECRET_KEY: !Ref StripeSecretKey
     LoggingConfig:
       LogFormat: JSON
       ApplicationLogLevel: INFO
       SystemLogLevel: WARN
   Api:
     TracingEnabled: true
+    Auth:
+      ApiKeyRequired: true
     Cors:
       AllowMethods: "'GET,POST,OPTIONS'"
       AllowHeaders: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
       AllowOrigin: "'*'"
 Resources:
-  RemoteMcpServerFunction:
+  # API Gateway API Key and Usage Plan for subscription billing
+  ApiKey:
+    Type: AWS::ApiGateway::ApiKey
+    Properties:
+      Name: !Sub "${AWS::StackName}-api-key"
+      Description: API Key for Remote MCP Server subscription billing
+      Enabled: true
+      StageKeys:
+        - RestApiId: !Ref ServerlessRestApi
+          StageName: Prod
+
+  UsagePlan:
+    Type: AWS::ApiGateway::UsagePlan
+    Properties:
+      UsagePlanName: !Sub "${AWS::StackName}-usage-plan"
+      Description: Usage plan for Remote MCP Server subscription billing
+      ApiStages:
+        - ApiId: !Ref ServerlessRestApi
+          Stage: Prod
+      Throttle:
+        BurstLimit: 500
+        RateLimit: 100
+      Quota:
+        Limit: 10000
+        Period: MONTH
+
+  UsagePlanKey:
+    Type: AWS::ApiGateway::UsagePlanKey
+    Properties:
+      KeyId: !Ref ApiKey
+      KeyType: API_KEY
+      UsagePlanId: !Ref UsagePlan
+
+  # DynamoDB table for subscription and usage tracking
+  SubscriptionTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "${AWS::StackName}-subscriptions"
+      AttributeDefinitions:
+        - AttributeName: api_key
+          AttributeType: S
+        - AttributeName: customer_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: api_key
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: CustomerIndex
+          KeySchema:
+            - AttributeName: customer_id
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+          BillingMode: PAY_PER_REQUEST
+      BillingMode: PAY_PER_REQUEST
+      Tags:
+        - Key: Project
+          Value: remote-mcp-server
+        - Key: Environment
+          Value: !Ref Environment
+
+  RemoteMCPServerFunction:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: .
       Handler: app.lambda_handler
-      Description: Remote MCP Server Lambda function with dual MCP/HTTP compatibility
+      Description: Remote MCP Server Lambda function with dual MCP/HTTP compatibility and subscription billing
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref SubscriptionTable
+        - Statement:
+          - Effect: Allow
+            Action:
+              - apigateway:GET
+              - apigateway:POST
+            Resource: 
+              - !Sub "arn:aws:apigateway:${AWS::Region}::/apikeys/*"
+              - !Sub "arn:aws:apigateway:${AWS::Region}::/usageplans/*"
       Tags:
         Project: remote-mcp-server
         Environment: !Ref Environment
       Events:
-        RemoteMcpServer:
-          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
-          Properties:
-            Path: /remote-mcp-server
-            Method: get
-        RemoteMcpServerPost:
+        RemoteMCPServer:
           Type: Api
           Properties:
-            Path: /remote-mcp-server
+            Path: /aegis
+            Method: get
+            Auth:
+              ApiKeyRequired: true
+        RemoteMCPServerPost:
+          Type: Api
+          Properties:
+            Path: /aegis
             Method: post
+            Auth:
+              ApiKeyRequired: true
         HealthCheck:
           Type: Api
           Properties:
             Path: /health
             Method: get
+        # New endpoints for subscription management
+        CreateSubscription:
+          Type: Api
+          Properties:
+            Path: /subscription/create
+            Method: post
+        GetSubscription:
+          Type: Api
+          Properties:
+            Path: /subscription/{api_key}
+            Method: get
+            Auth:
+              ApiKeyRequired: true
+        UpdateUsage:
+          Type: Api
+          Properties:
+            Path: /subscription/usage
+            Method: post
+            Auth:
+              ApiKeyRequired: true
 
   ApplicationResourceGroup:
     Type: AWS::ResourceGroups::Group
@@ -81,12 +185,21 @@ Outputs:
   # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
   # Find out more about other implicit resources you can reference within SAM
   # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
-  RemoteMcpServerApi:
-    Description: API Gateway endpoint URL for Prod stage for RemoteMcpServer function
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/remote-mcp-server/"
-  RemoteMcpServerFunction:
-    Description: RemoteMcpServer Lambda Function ARN
-    Value: !GetAtt RemoteMcpServerFunction.Arn
-  RemoteMcpServerFunctionIamRole:
-    Description: Implicit IAM Role created for RemoteMcpServer function
-    Value: !GetAtt RemoteMcpServerFunctionRole.Arn
+  RemoteMCPServerApi:
+    Description: API Gateway endpoint URL for Prod stage for Remote MCP Server
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/aegis/"
+  RemoteMCPServerFunction:
+    Description: Remote MCP Server Lambda Function ARN
+    Value: !GetAtt RemoteMCPServerFunction.Arn
+  RemoteMCPServerFunctionIamRole:
+    Description: Implicit IAM Role created for Remote MCP Server function
+    Value: !GetAtt RemoteMCPServerFunctionRole.Arn
+  ApiKey:
+    Description: API Gateway API Key ID for subscription billing
+    Value: !Ref ApiKey
+  UsagePlan:
+    Description: API Gateway Usage Plan ID
+    Value: !Ref UsagePlan
+  SubscriptionTable:
+    Description: DynamoDB table for subscription management
+    Value: !Ref SubscriptionTable

@@ -43,7 +43,7 @@ fi
 MODE=${MODE:-mcp}
 PORT=${PORT:-3000}
 LOG_LEVEL=${LOG_LEVEL:-DEBUG}
-ENVIRONMENT=${ENVIRONMENT:-development}
+ENVIRONMENT=${ENVIRONMENT:-dev}
 
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
@@ -186,7 +186,7 @@ case "$MODE" in
         fi
         
         log_info "Building Docker image..."
-        docker build -t remote-mcp-server:dev --target development .
+        docker build -t remote-mcp-server:dev --target dev .
         
         log_info "Starting Docker container on port $PORT..."
         log_info "Server will be available at: http://localhost:$PORT"

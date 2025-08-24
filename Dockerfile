@@ -26,7 +26,7 @@ COPY pyproject.toml uv.lock* ./
 RUN uv sync --no-dev --no-editable
 
 # Production stage
-FROM python:3.11-slim as production
+FROM python:3.11-slim as prod
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1 \
@@ -34,7 +34,7 @@ ENV PYTHONUNBUFFERED=1 \
     PATH="/app/.venv/bin:$PATH" \
     LOG_LEVEL=INFO \
     PORT=3000 \
-    ENVIRONMENT=production
+    ENVIRONMENT=prod
 
 # Create non-root user for security
 RUN groupadd -r appuser && useradd -r -g appuser appuser
@@ -78,7 +78,7 @@ EXPOSE ${PORT}
 CMD ["python", "-m", "remote_mcp_server.mcp_server"]
 
 # Development stage (for local development)
-FROM builder as development
+FROM builder as dev
 
 # Install development dependencies
 RUN uv sync --group dev
@@ -87,7 +87,7 @@ RUN uv sync --group dev
 COPY . .
 
 # Set development environment
-ENV ENVIRONMENT=development \
+ENV ENVIRONMENT=dev \
     LOG_LEVEL=DEBUG
 
 # Switch to non-root user

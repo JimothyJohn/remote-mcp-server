@@ -7,7 +7,7 @@ services:
   dev:
     environment:
       - LOG_LEVEL=DEBUG
-      - ENVIRONMENT=development
+      - ENVIRONMENT=dev
     volumes:
       - ./local-data:/app/data
     ports:
@@ -16,7 +16,7 @@ services:
   prod:
     environment:
       - LOG_LEVEL=INFO
-      - ENVIRONMENT=production
+      - ENVIRONMENT=prod
     # Uncomment to use custom configuration
     # volumes:
     #   - ./config/production.json:/app/config.json

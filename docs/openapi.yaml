@@ -1,0 +1,628 @@
+openapi: 3.0.3
+info:
+  title: Remote MCP Server API
+  description: |
+    A comprehensive MCP server with AWS Lambda compatibility, featuring dual HTTP API and MCP protocol support for seamless AI assistant integration.
+    
+    ## Features
+    - **REST API**: HTTP endpoints for traditional web integration
+    - **MCP Protocol**: Model Context Protocol for AI assistant integration
+    - **AWS Lambda**: Serverless deployment with auto-scaling
+    - **Docker**: Containerized deployment for any environment
+    
+    ## Authentication
+    Currently, no authentication is required for public endpoints.
+    
+    ## Rate Limiting
+    AWS Lambda automatically handles scaling. Local deployments should implement rate limiting as needed.
+  version: 1.0.0
+  contact:
+    name: Remote MCP Server Team
+    url: https://github.com/JimothyJohn/remote-mcp-server
+    email: support@advin.io
+  license:
+    name: MIT License
+    url: https://github.com/JimothyJohn/remote-mcp-server/blob/main/LICENSE
+
+servers:
+  - url: https://rexlaqrt59.execute-api.us-east-1.amazonaws.com/Prod
+    description: Production server (AWS Lambda)
+  - url: http://localhost:3000
+    description: Local development server
+  - url: http://localhost:8080
+    description: Docker container (default port)
+
+tags:
+  - name: Health
+    description: System health and monitoring endpoints
+  - name: MCP Protocol
+    description: Model Context Protocol endpoints for AI assistant integration
+  - name: Server Info
+    description: Server information and metadata endpoints
+
+paths:
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Health Check
+      description: |
+        Returns server health status and metadata. Use this endpoint to verify server availability and monitor system status.
+      operationId: getHealth
+      responses:
+        '200':
+          description: Server is healthy and operational
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+              example:
+                status: healthy
+                service: remote-mcp-server
+                version: "1.0.0"
+                timestamp: "2025-08-22T02:24:52.062825"
+        '500':
+          description: Server health check failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /:
+    get:
+      tags:
+        - Server Info
+      summary: Get Server Information
+      description: |
+        Returns server information and available endpoints. Provides metadata about the server version, available endpoints, and service details.
+      operationId: getServerInfo
+      responses:
+        '200':
+          description: Server information retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerInfoResponse'
+              example:
+                message: remote-mcp-server
+                version: "1.0.0"
+                timestamp: "2025-08-22T02:25:00.428904"
+                method: GET
+                path: "/"
+                endpoints:
+                  health: "/health"
+                  mcp: "POST / with JSON-RPC payload"
+
+    post:
+      tags:
+        - MCP Protocol
+      summary: Process MCP Requests and Data
+      description: |
+        Multi-purpose POST endpoint supporting various data formats:
+        
+        1. **MCP Protocol Requests**: JSON-RPC 2.0 formatted requests for tool execution
+        2. **Regular JSON Data**: Standard JSON data processing
+        3. **Base64 Encoded Data**: Binary data transmission support
+        
+        ### MCP Protocol Support
+        This endpoint fully supports the Model Context Protocol (MCP) for AI assistant integration.
+        MCP requests must include `jsonrpc`, `method`, and `id` fields.
+        
+        ### Available MCP Tools
+        - `hello_world`: Generate personalized greetings
+        - `get_current_time`: Get current ISO timestamp
+        - `echo_message`: Echo messages with optional repetition
+        - `get_server_info`: Retrieve comprehensive server information
+        - `calculate_sum`: Calculate sum of numeric arrays
+      operationId: processMCPRequest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: '#/components/schemas/MCPRequest'
+                - $ref: '#/components/schemas/RegularDataRequest'
+            examples:
+              mcp_hello_world:
+                summary: MCP Hello World Tool Call
+                description: Execute the hello_world MCP tool with a custom name
+                value:
+                  jsonrpc: "2.0"
+                  method: "tools/call"
+                  params:
+                    name: "hello_world"
+                    arguments:
+                      name: "API User"
+                  id: 1
+              mcp_tools_list:
+                summary: MCP Tools List
+                description: Get list of all available MCP tools
+                value:
+                  jsonrpc: "2.0"
+                  method: "tools/list"
+                  params: {}
+                  id: 2
+              mcp_get_time:
+                summary: MCP Get Current Time
+                description: Get the current timestamp using MCP
+                value:
+                  jsonrpc: "2.0"
+                  method: "tools/call"
+                  params:
+                    name: "get_current_time"
+                    arguments: {}
+                  id: 3
+              regular_json:
+                summary: Regular JSON Data
+                description: Send regular JSON data for processing
+                value:
+                  message: "Hello from API!"
+                  data: [1, 2, 3]
+                  user_id: 123
+      responses:
+        '200':
+          description: Request processed successfully
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/MCPResponse'
+                  - $ref: '#/components/schemas/RegularDataResponse'
+              examples:
+                mcp_success:
+                  summary: MCP Tool Call Success
+                  value:
+                    jsonrpc: "2.0"
+                    result:
+                      content:
+                        - type: text
+                          text: "Hello, API User! Welcome to Remote MCP Server."
+                    id: 1
+                mcp_tools_list:
+                  summary: MCP Tools List Response
+                  value:
+                    jsonrpc: "2.0"
+                    result:
+                      tools:
+                        - name: "hello_world"
+                          description: "Greet someone"
+                        - name: "get_current_time"
+                          description: "Get current timestamp"
+                    id: 2
+                regular_data_response:
+                  summary: Regular Data Processing Response
+                  value:
+                    message: "POST request received"
+                    service: "remote-mcp-server"
+                    version: "1.0.0"
+                    timestamp: "2025-08-22T02:25:00.428904"
+                    received_data:
+                      message: "Hello from API!"
+                      data: [1, 2, 3]
+                      user_id: 123
+        '400':
+          description: Bad Request - Invalid JSON or malformed request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalid_json:
+                  summary: Invalid JSON Format
+                  value:
+                    error: "Bad Request"
+                    error_code: "INVALID_JSON"
+                    message: "Request body contains invalid JSON"
+                    details: "JSON parsing failed at line 1, column 15: Expecting ',' delimiter"
+                    suggestion: "Validate your JSON syntax. Common issues: trailing commas, unquoted keys, invalid escape sequences."
+                    timestamp: "2025-08-22T02:25:00.428904"
+                missing_body:
+                  summary: Missing Request Body
+                  value:
+                    error: "Bad Request"
+                    error_code: "MISSING_BODY"
+                    message: "POST request requires a JSON body"
+                    details: "Send a JSON payload in the request body. For MCP requests, include 'jsonrpc', 'method', and 'id' fields."
+                    timestamp: "2025-08-22T02:25:00.428904"
+        '405':
+          description: Method Not Allowed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: "Method Not Allowed"
+                error_code: "UNSUPPORTED_METHOD"
+                message: "HTTP method 'PUT' is not supported"
+                allowed_methods: ["GET", "POST", "OPTIONS"]
+                details: "Use GET for health checks and server info, POST for MCP requests and data submission."
+                timestamp: "2025-08-22T02:25:00.428904"
+        '422':
+          description: Unprocessable Entity - Validation errors
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    options:
+      tags:
+        - Server Info
+      summary: CORS Preflight
+      description: Handle CORS preflight requests for browser compatibility
+      operationId: handleCORSPreflight
+      responses:
+        '200':
+          description: CORS preflight response
+          headers:
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+                example: "*"
+            Access-Control-Allow-Methods:
+              schema:
+                type: string
+                example: "GET, POST, OPTIONS"
+            Access-Control-Allow-Headers:
+              schema:
+                type: string
+                example: "Content-Type, Authorization"
+
+components:
+  schemas:
+    HealthResponse:
+      type: object
+      description: Server health status response
+      required:
+        - status
+        - service
+        - version
+        - timestamp
+      properties:
+        status:
+          type: string
+          enum: [healthy, unhealthy, degraded]
+          description: Current health status of the server
+          example: healthy
+        service:
+          type: string
+          description: Service identifier
+          example: remote-mcp-server
+        version:
+          type: string
+          description: Current version of the service
+          example: "1.0.0"
+        timestamp:
+          type: string
+          format: date-time
+          description: ISO timestamp of the health check
+          example: "2025-08-22T02:24:52.062825"
+
+    ServerInfoResponse:
+      type: object
+      description: Server information and metadata
+      required:
+        - message
+        - version
+        - timestamp
+      properties:
+        message:
+          type: string
+          description: Service name or welcome message
+          example: remote-mcp-server
+        version:
+          type: string
+          description: Current version of the service
+          example: "1.0.0"
+        timestamp:
+          type: string
+          format: date-time
+          description: ISO timestamp of the request
+          example: "2025-08-22T02:25:00.428904"
+        method:
+          type: string
+          description: HTTP method used for the request
+          example: GET
+        path:
+          type: string
+          description: Request path
+          example: "/"
+        endpoints:
+          type: object
+          description: Available API endpoints
+          properties:
+            health:
+              type: string
+              example: "/health"
+            mcp:
+              type: string
+              example: "POST / with JSON-RPC payload"
+
+    MCPRequest:
+      type: object
+      description: Model Context Protocol request (JSON-RPC 2.0)
+      required:
+        - jsonrpc
+        - method
+        - id
+      properties:
+        jsonrpc:
+          type: string
+          enum: ["2.0"]
+          description: JSON-RPC protocol version
+          example: "2.0"
+        method:
+          type: string
+          description: MCP method to call
+          enum: ["tools/list", "tools/call", "ping"]
+          example: "tools/call"
+        params:
+          type: object
+          description: Method parameters
+          properties:
+            name:
+              type: string
+              description: Tool name (for tools/call)
+              example: "hello_world"
+            arguments:
+              type: object
+              description: Tool arguments
+              additionalProperties: true
+        id:
+          oneOf:
+            - type: string
+            - type: number
+          description: Request identifier for correlation
+          example: 1
+
+    MCPResponse:
+      type: object
+      description: Model Context Protocol response (JSON-RPC 2.0)
+      required:
+        - jsonrpc
+        - id
+      properties:
+        jsonrpc:
+          type: string
+          enum: ["2.0"]
+          description: JSON-RPC protocol version
+          example: "2.0"
+        result:
+          type: object
+          description: Successful response result
+          properties:
+            content:
+              type: array
+              items:
+                type: object
+                properties:
+                  type:
+                    type: string
+                    enum: ["text", "image", "resource"]
+                    example: "text"
+                  text:
+                    type: string
+                    example: "Hello, World! Welcome to Remote MCP Server."
+            tools:
+              type: array
+              items:
+                $ref: '#/components/schemas/MCPTool'
+        error:
+          $ref: '#/components/schemas/MCPError'
+        id:
+          oneOf:
+            - type: string
+            - type: number
+          description: Request identifier (matches request)
+          example: 1
+
+    MCPTool:
+      type: object
+      description: MCP tool definition
+      required:
+        - name
+        - description
+      properties:
+        name:
+          type: string
+          description: Tool name
+          example: "hello_world"
+        description:
+          type: string
+          description: Tool description
+          example: "Say hello to someone"
+        inputSchema:
+          type: object
+          description: JSON schema for tool input validation
+          additionalProperties: true
+
+    MCPError:
+      type: object
+      description: MCP error response
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          description: JSON-RPC error code
+          enum: [-32700, -32600, -32601, -32602, -32603]
+          example: -32602
+        message:
+          type: string
+          description: Error message
+          example: "Invalid params"
+        data:
+          type: object
+          description: Additional error information
+          additionalProperties: true
+
+    RegularDataRequest:
+      type: object
+      description: Regular JSON data request
+      additionalProperties: true
+      example:
+        message: "Hello from API!"
+        data: [1, 2, 3]
+        user_id: 123
+
+    RegularDataResponse:
+      type: object
+      description: Regular data processing response
+      required:
+        - message
+        - service
+        - version
+        - timestamp
+      properties:
+        message:
+          type: string
+          description: Response message
+          example: "POST request received"
+        service:
+          type: string
+          description: Service identifier
+          example: "remote-mcp-server"
+        version:
+          type: string
+          description: Service version
+          example: "1.0.0"
+        timestamp:
+          type: string
+          format: date-time
+          description: ISO timestamp of processing
+          example: "2025-08-22T02:25:00.428904"
+        received_data:
+          type: object
+          description: Echo of received data
+          additionalProperties: true
+        path:
+          type: string
+          description: Request path
+          example: "/"
+        method:
+          type: string
+          description: HTTP method
+          example: "POST"
+
+    ErrorResponse:
+      type: object
+      description: Standard error response
+      required:
+        - error
+        - error_code
+        - message
+        - timestamp
+      properties:
+        error:
+          type: string
+          description: HTTP error title
+          example: "Bad Request"
+        error_code:
+          type: string
+          description: Specific error code for programmatic handling
+          example: "INVALID_JSON"
+        message:
+          type: string
+          description: Human-readable error message
+          example: "Request body contains invalid JSON"
+        details:
+          type: string
+          description: Detailed error information
+          example: "JSON parsing failed at line 1, column 15: Expecting ',' delimiter"
+        timestamp:
+          type: string
+          format: date-time
+          description: ISO timestamp of the error
+          example: "2025-08-22T02:25:00.428904"
+        service:
+          type: string
+          description: Service identifier
+          example: "remote-mcp-server"
+        version:
+          type: string
+          description: Service version
+          example: "1.0.0"
+        suggestions:
+          type: array
+          description: Helpful suggestions for resolving the error
+          items:
+            type: string
+          example:
+            - "Check request format and content type"
+            - "Ensure JSON is properly formatted"
+        allowed_methods:
+          type: array
+          description: Allowed HTTP methods (for 405 errors)
+          items:
+            type: string
+          example: ["GET", "POST", "OPTIONS"]
+
+  responses:
+    BadRequest:
+      description: Bad Request - Invalid input
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    NotFound:
+      description: Not Found - Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    MethodNotAllowed:
+      description: Method Not Allowed - HTTP method not supported
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    InternalServerError:
+      description: Internal Server Error - Unexpected server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  examples:
+    MCPHelloWorldRequest:
+      summary: Hello World Tool Call
+      description: Call the hello_world MCP tool with a custom name
+      value:
+        jsonrpc: "2.0"
+        method: "tools/call"
+        params:
+          name: "hello_world"
+          arguments:
+            name: "Alice"
+        id: 1
+
+    MCPToolsListRequest:
+      summary: List Available Tools
+      description: Get a list of all available MCP tools
+      value:
+        jsonrpc: "2.0"
+        method: "tools/list"
+        params: {}
+        id: 2
+
+    MCPCalculateSumRequest:
+      summary: Calculate Sum Tool Call
+      description: Calculate the sum of numbers using MCP
+      value:
+        jsonrpc: "2.0"
+        method: "tools/call"
+        params:
+          name: "calculate_sum"
+          arguments:
+            numbers: [1, 2, 3, 4, 5]
+        id: 3

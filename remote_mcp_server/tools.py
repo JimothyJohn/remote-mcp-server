@@ -60,10 +60,6 @@ def register_tools(mcp: FastMCP, config: ServerConfig) -> None:
         Returns:
             The echoed message(s)
         """
-        # Input validation
-        if not isinstance(message, str):
-            message = str(message)
-            
         if not isinstance(repeat, int) or repeat < 1 or repeat > 10:
             raise ValueError("Repeat count must be between 1 and 10")
             

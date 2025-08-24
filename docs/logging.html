@@ -12,242 +12,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css" rel="stylesheet">
     
-    <style>
-        :root {
-            --primary-black: #000000;
-            --soft-black: #1a1a1a;
-            --dark-gray: #2d2d2d;
-            --medium-gray: #4a4a4a;
-            --light-gray: #6b6b6b;
-            --very-light-gray: #8a8a8a;
-            --border-gray: #e0e0e0;
-            --white: #ffffff;
-            --off-white: #f8f8f8;
-            --text-primary: var(--primary-black);
-            --text-secondary: var(--medium-gray);
-            --text-muted: var(--light-gray);
-            --bg-primary: var(--white);
-            --bg-secondary: var(--off-white);
-            --bg-tertiary: #f4f4f4;
-            --accent-color: var(--dark-gray);
-            --gradient-primary: linear-gradient(135deg, var(--primary-black), var(--dark-gray));
-            --gradient-secondary: linear-gradient(135deg, var(--medium-gray), var(--light-gray));
-        }
-        
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        
-        body {
-            font-family: 'Inter', sans-serif;
-            line-height: 1.7;
-            color: var(--text-primary);
-            background: var(--bg-primary);
-        }
-        
-        .header {
-            position: fixed;
-            top: 0;
-            width: 100%;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid var(--border-gray);
-            z-index: 1000;
-        }
-        
-        .nav {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1rem 2rem;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        
-        .logo {
-            font-size: 1.5rem;
-            font-weight: 700;
-            background: var(--gradient-primary);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            text-decoration: none;
-        }
-        
-        .nav-links {
-            display: flex;
-            list-style: none;
-            gap: 2rem;
-        }
-        
-        .nav-links a {
-            color: var(--text-secondary);
-            text-decoration: none;
-            font-weight: 500;
-            transition: color 0.3s ease;
-        }
-        
-        .nav-links a:hover, .nav-links a.active {
-            color: var(--primary-black);
-        }
-        
-        .main-content {
-            margin-top: 80px;
-            padding: 2rem;
-            max-width: 1000px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-        
-        .content-header {
-            margin-bottom: 3rem;
-            text-align: center;
-        }
-        
-        .content-title {
-            font-size: 2.5rem;
-            font-weight: 700;
-            background: var(--gradient-primary);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin-bottom: 1rem;
-        }
-        
-        .content-subtitle {
-            color: var(--text-secondary);
-            font-size: 1.2rem;
-            max-width: 600px;
-            margin: 0 auto;
-        }
-        
-        h1, h2, h3, h4, h5, h6 {
-            color: var(--text-primary);
-            margin: 2rem 0 1rem 0;
-            line-height: 1.3;
-        }
-        
-        h1 { font-size: 2.5rem; }
-        h2 { font-size: 2rem; border-bottom: 2px solid var(--border-gray); padding-bottom: 0.5rem; }
-        h3 { font-size: 1.5rem; color: var(--accent-color); }
-        h4 { font-size: 1.3rem; }
-        h5 { font-size: 1.1rem; }
-        h6 { font-size: 1rem; }
-        
-        p {
-            color: var(--text-secondary);
-            margin: 1rem 0;
-            line-height: 1.7;
-        }
-        
-        ul, ol {
-            color: var(--text-secondary);
-            margin: 1rem 0;
-            padding-left: 2rem;
-        }
-        
-        li { margin: 0.5rem 0; }
-        
-        a {
-            color: var(--primary-black);
-            text-decoration: none;
-        }
-        
-        a:hover {
-            color: var(--dark-gray);
-            text-decoration: underline;
-        }
-        
-        pre {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border-gray);
-            border-radius: 8px;
-            padding: 1.5rem;
-            margin: 1.5rem 0;
-            overflow-x: auto;
-        }
-        
-        code {
-            background: var(--bg-tertiary);
-            padding: 0.2rem 0.4rem;
-            border-radius: 4px;
-            font-family: 'Monaco', 'Consolas', monospace;
-            font-size: 0.9rem;
-        }
-        
-        pre code {
-            background: none;
-            padding: 0;
-        }
-        
-        .section {
-            background: var(--bg-secondary);
-            border-radius: 12px;
-            padding: 2rem;
-            margin: 2rem 0;
-            border: 1px solid var(--border-gray);
-        }
-        
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 1rem 0;
-            background: var(--white);
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
-        
-        th, td {
-            padding: 0.75rem;
-            text-align: left;
-            border-bottom: 1px solid var(--border-gray);
-        }
-        
-        th {
-            background: var(--bg-tertiary);
-            color: var(--text-primary);
-            font-weight: 600;
-        }
-        
-        td {
-            color: var(--text-secondary);
-        }
-        
-        .log-level {
-            display: inline-block;
-            padding: 0.2rem 0.5rem;
-            border-radius: 3px;
-            font-weight: 600;
-            font-size: 0.8rem;
-            margin-right: 0.5rem;
-        }
-        
-        .level-debug { background: var(--light-gray); color: white; }
-        .level-info { background: var(--dark-gray); color: white; }
-        .level-warning { background: #f59e0b; color: white; }
-        .level-error { background: #ef4444; color: white; }
-        .level-critical { background: #7f1d1d; color: white; }
-        
-        @media (max-width: 768px) {
-            .nav {
-                flex-direction: column;
-                gap: 1rem;
-            }
-            
-            .nav-links {
-                flex-wrap: wrap;
-                justify-content: center;
-                gap: 1rem;
-            }
-            
-            .main-content {
-                padding: 1rem;
-            }
-            
-            .content-title {
-                font-size: 2rem;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <header class="header">
@@ -274,7 +39,7 @@
 
         <div class="section">
             <h2>Overview</h2>
-            <p>The Remote MCP Server implements a comprehensive structured logging system designed for:</p>
+            <p>Remote MCP Server implements a comprehensive structured logging system designed for:</p>
             <ul>
                 <li><strong>Troubleshooting</strong>: Detailed error context and stack traces</li>
                 <li><strong>Performance Monitoring</strong>: Request/response timing and resource usage</li>
@@ -513,11 +278,11 @@ setup_logging(
 uv run python -m remote_mcp_server.mcp_server</code></pre>
 
             <h3>File-based Logging</h3>
-            <pre><code class="language-bash">export LOG_FILE=/tmp/mcp-server.log
+            <pre><code class="language-bash">export LOG_FILE=/tmp/remote-mcp-server-server.log
 uv run python -m remote_mcp_server.mcp_server
 
 # Monitor logs
-tail -f /tmp/mcp-server.log | jq .</code></pre>
+tail -f /tmp/remote-mcp-server-server.log | jq .</code></pre>
 
             <h3>Filter Specific Components</h3>
             <pre><code class="language-bash"># Only tool execution logs
@@ -572,5 +337,6 @@ sensitive_keys = {
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>

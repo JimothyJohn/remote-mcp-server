@@ -7,126 +7,7 @@
     <meta name="description" content="Machine-readable documentation and API specifications for autonomous agents using Remote MCP Server.">
     <link rel="canonical" href="https://JimothyJohn.github.io/remote-mcp-server/agents.html">
     
-    <style>
-        :root {
-            --primary-black: #000000;
-            --soft-black: #1a1a1a;
-            --dark-gray: #2d2d2d;
-            --medium-gray: #4a4a4a;
-            --light-gray: #6b6b6b;
-            --very-light-gray: #8a8a8a;
-            --border-gray: #e0e0e0;
-            --white: #ffffff;
-            --off-white: #f8f8f8;
-            --text-primary: var(--primary-black);
-            --text-secondary: var(--medium-gray);
-            --text-muted: var(--light-gray);
-            --bg-primary: var(--white);
-            --bg-secondary: var(--off-white);
-            --bg-tertiary: #f4f4f4;
-            --accent-color: var(--dark-gray);
-            --gradient-primary: linear-gradient(135deg, var(--primary-black), var(--dark-gray));
-            --gradient-secondary: linear-gradient(135deg, var(--medium-gray), var(--light-gray));
-        }
-        
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        
-        body {
-            font-family: 'Monaco', 'Consolas', 'Courier New', monospace;
-            line-height: 1.4;
-            color: var(--text-primary);
-            background: var(--bg-primary);
-            font-size: 14px;
-        }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 1rem;
-        }
-        
-        h1, h2, h3 {
-            color: var(--primary-black);
-            margin: 1rem 0 0.5rem 0;
-            font-weight: 600;
-        }
-        
-        h1 { font-size: 1.5rem; border-bottom: 2px solid var(--primary-black); padding-bottom: 0.5rem; }
-        h2 { font-size: 1.2rem; border-bottom: 1px solid var(--border-gray); padding-bottom: 0.25rem; }
-        h3 { font-size: 1rem; }
-        
-        p, li { color: var(--text-secondary); margin: 0.25rem 0; }
-        
-        ul, ol { padding-left: 1.5rem; margin: 0.5rem 0; }
-        
-        pre {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border-gray);
-            padding: 0.75rem;
-            margin: 0.5rem 0;
-            overflow-x: auto;
-            font-size: 12px;
-            border-radius: 4px;
-        }
-        
-        code {
-            background: var(--bg-tertiary);
-            padding: 0.1rem 0.25rem;
-            border-radius: 2px;
-            font-size: 12px;
-        }
-        
-        pre code {
-            background: none;
-            padding: 0;
-        }
-        
-        .spec-section {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border-gray);
-            padding: 1rem;
-            margin: 1rem 0;
-            border-radius: 4px;
-        }
-        
-        .api-endpoint {
-            background: var(--bg-tertiary);
-            border: 1px solid var(--border-gray);
-            padding: 0.5rem;
-            margin: 0.5rem 0;
-            border-radius: 2px;
-        }
-        
-        .method-get { border-left: 4px solid #28a745; }
-        .method-post { border-left: 4px solid #007bff; }
-        
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 0.5rem 0;
-            font-size: 12px;
-        }
-        
-        th, td {
-            border: 1px solid var(--border-gray);
-            padding: 0.25rem 0.5rem;
-            text-align: left;
-        }
-        
-        th {
-            background: var(--bg-tertiary);
-            font-weight: 600;
-        }
-        
-        .json-schema {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border-gray);
-            padding: 0.5rem;
-            font-size: 11px;
-            border-radius: 2px;
-            margin: 0.25rem 0;
-        }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
@@ -400,5 +281,6 @@ TRACING: Request ID in responses
 STATUS_PAGE: Health endpoint provides service status</code></pre>
         </div>
     </div>
+    <script src="script.js"></script>
 </body>
 </html>
